@@ -1,8 +1,0 @@
-Сокровища:
-class = treasures
-cost = 9
-
-Сокровища:
-class = treasures
-cost = 19
-

@@ -1,41 +1,37 @@
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt  # нужен только на Windows
-python3 main.py
+# Rogue на Python (curses)
 
-- `↑ ↓ ← →` - движение
-- `Q` - выход
+Консольный roguelike в духе Rogue 1980: 21 уровень, 9 комнат на уровень, пошаговый бой,
+рюкзак, враги с разным поведением. Python 3.10, интерфейс на `curses`.
 
-- `S` - старт, `X` - переход на следующий уровень, `F` - финиш
-- `Z` - зомби, `V` - вампир
+## Запуск
 
-- `logic.py` - правила игры (domain)
-- `view.py` - отрисовка и ввод (curses)
-- `map.py` - загрузка карт из `mapN.txt`
-- `end_screen.py` - финальный экран
-- `main.py` - точка входа
+```bash
+cd src
+python3.10 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt                      # на Windows поставит windows-curses
+python3 main.py              # случайный мир
+python3 main.py --seed 42    # воспроизводимый мир
+```
 
-`curses.error` - окно терминала меньше карты
-`ModuleNotFoundError: _curses` на Windows - выполните `pip install windows-curses`
-`FileNotFoundError: map1.txt` - запускайте из папки с игрой
+Нужен терминал не меньше **78×24**. Если окно меньше, игра попросит его увеличить.
 
-что сделано:
+## Управление
 
-- отрисовка через curses
-- перемещение
-- создание функциональных объектов по типу переходов итд
-- враги наносят игроку урон и двигаются в его сторону
-- переход между уровнями и их счетчик
-- окно конца игры
+| Клавиша | Действие |
+|---|---|
+| `W` `A` `S` `D` (или стрелки) | ход; шаг в сторону врага = атака |
+| `h` / `j` / `k` / `e` | оружие / еда / эликсир / свиток: откроется список, выбор цифрами `1-9` (`0` у оружия - убрать из рук) |
+| `q` | выход |
 
-Задачи:
+Работает и на русской раскладке (`ц ф ы в`, `р о л у`, `й`).
 
-- прокачку 
+## Разработка
 
-сделал: 
+```bash
+cd src
+make test    # pytest
+make lint    # ruff
+```
 
-- изменил main, теперь вроде +- адекватно
-- добавил бой, логику ловкости
-- сделал отдельный класс entity для всех сущностей (игрока тоже)
-- простой дебаг режим 
-- предметы
-- генерация (bsp)
+- Архитектура, правила слоёв и «куда добавлять новое»: [`src/ARCHITECTURE.md`](src/ARCHITECTURE.md)
+- Ветки, коммиты, merge request'ы: [`src/CONTRIBUTING.md`](src/CONTRIBUTING.md)

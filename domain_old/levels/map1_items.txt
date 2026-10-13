@@ -1,0 +1,12 @@
+Зелье здоровья:
+class = heal
+cost = 5
+
+Зелье здоровья:
+class = heal
+cost = 5
+
+Зелье здоровья:
+class = heal
+cost = 5
+

@@ -1,7 +1,7 @@
 import curses
 import end_screen
 
-KEYS = {
+KEYS = { # клавиши управления, соответствующие смещениям по x и y
     curses.KEY_UP: (0, -1),
     curses.KEY_DOWN: (0, 1),
     curses.KEY_LEFT: (-1, 0),
@@ -10,7 +10,7 @@ KEYS = {
 
 FRAME_COLOR = 2  # пара цветов, можно завести отдельную
 
-def draw_frame(screen, h, w):
+def draw_frame(screen, h, w): # рисует рамку вокруг карты
     screen.addstr(0, 0, '╔' + '═' * w + '╗', curses.color_pair(FRAME_COLOR))
     for y in range(1, h + 1):
         screen.addstr(y, 0, '║', curses.color_pair(FRAME_COLOR))
@@ -19,22 +19,22 @@ def draw_frame(screen, h, w):
 
 
 
-def draw(screen, game):
+def draw(screen, game): # рисует карту, игрока, врагов, предметы и интерфейс
     screen.clear()
     h = len(game.tiles)
     w = len(game.tiles[0])
 
-    draw_frame(screen, h, w)
+    draw_frame(screen, h, w) 
     p = game.player
     screen.addstr(h + 2, 0, f"[{'█' * p.health_blocks:<{p.max_blocks}}]")  # вместо Player.health
     screen.addstr(h + 3, 0, "↑ ↓ ← → Q   E - инвентарь")
     if game.pending_item:
         screen.addstr(h + 4, 0, f"Поднять «{game.pending_item.name}»? (y/n)")
 
-    if DEBUG:
+    if DEBUG: # включает дебаг отрисовку
         draw_debug(screen, game, w)      # было: draw_debug(screen, game, h + 7)
 
-    for y, row in enumerate(game.tiles):
+    for y, row in enumerate(game.tiles): # отрисовка карты, игрока, врагов и предметов, добавлять по мере появления нового
         for x, tile in enumerate(row):
             if (x, y) == (game.player.x, game.player.y):
                 screen.addch(y + 1, x + 1, '█')
@@ -51,16 +51,16 @@ def draw(screen, game):
             else:
                 screen.addch(y + 1, x + 1, ' ')
 
-    for (x, y), item in game.items.items():
+    for (x, y), item in game.items.items(): # отрисовка предметов на карте, если они не под игроком
         if (x, y) != (game.player.x, game.player.y):
             screen.addch(y + 1, x + 1, 'i', curses.color_pair(4))
 
-    for e in game.enemies:
+    for e in game.enemies: # отрисовка врагов на карте, если они не под игроком
         screen.addch(e.y + 1, e.x + 1, e.symbol, curses.color_pair(e.color))
 
-    screen.refresh()
+    screen.refresh() # обновляет кадр
 
-def run(screen, game):
+def run(screen, game):  # основной цикл игры, обрабатывает ввод и обновляет состояние игры
     curses.start_color()
     curses.init_pair(1, 102, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
@@ -92,9 +92,9 @@ def run(screen, game):
     return game
 
 
-DEBUG = True
+DEBUG = True # включает дебаг 
 
-def draw_debug(screen, game, w):
+def draw_debug(screen, game, w): 
     rows, cols = screen.getmaxyx()
     x = w + 4                                  # правее рамки карты
     p = game.player
@@ -108,7 +108,7 @@ def draw_debug(screen, game, w):
             screen.addstr(i, x, line[:cols - x - 1])
 
 
-def show_inventory(screen, game):
+def show_inventory(screen, game): # показывает инвентарь игрока, список предметов, которые он подобрал
     names = [i.name for i in game.player.inventory] or ["(пусто)"]
     lines = ["Инвентарь", ""] + names
     h, w = screen.getmaxyx()

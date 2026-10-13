@@ -4,7 +4,7 @@ SCALE = 10         # масштаб: 1 блок полоски здоровья 
 GROWTH = 1.08      # множитель характеристик врагов за каждый уровень
 
 
-class Entity:
+class Entity:    # базовый класс для сущностей
     name = "Entity"
     max_health = 10 * SCALE
     agility = 3                    # ловкость
@@ -29,7 +29,7 @@ class Entity:
         return self.max_health // SCALE
 
 
-class Player(Entity):
+class Player(Entity):    # наследник Entity, игрок
     name = "Player"
     max_health = 10 * SCALE        # 100
     agility = 3
@@ -40,18 +40,18 @@ class Player(Entity):
         self.inventory = []
 
     @property
-    def treasure(self):
+    def treasure(self):        # сокровищв
         return sum(i.cost for i in self.inventory if isinstance(i, Treasure))
 
 
-class Enemy(Entity):
-    symbol = '?'
+class Enemy(Entity):  # наследник Entity, враг
+    symbol = '?' # будет меняться 
     color = 3
     radius = 6        # радиус враждебности
     move_every = 2    # действует раз в N кадров
     loot = 5          # базовая ценность сокровищ с врага
 
-    def __init__(self, x=0, y=0, level=1):
+    def __init__(self, x=0, y=0, level=1):   # просчет увеличения сложности по уровням
         super().__init__(x, y)
         self.timer = 0
         self.level = level
@@ -86,10 +86,10 @@ class Vampire(Enemy):
     loot = 10
 
 
-ENEMY_TYPES = {'Z': Zombie, 'V': Vampire}
+ENEMY_TYPES = {'Z': Zombie, 'V': Vampire}  # сюда вводим новые типы врагов, чтобы генератор их создавал
 
 
-class Item:
+class Item:         # класс для предментов 
     def __init__(self, name, cost=0):
         self.name = name
         self.cost = cost
@@ -103,14 +103,17 @@ class Heal(Item):
     pass
 
 
-ITEM_TYPES = {'treasures': Treasure, 'heal': Heal}
+ITEM_TYPES = {'treasures': Treasure, 'heal': Heal} # ддобавляем новые предметы для генератора
 
 
-def make_item(data):
+def make_item(data):  # создаёт предмет по данным из генератора
     return ITEM_TYPES[data['class']](data['name'], int(data['cost']))
 
 
-def hit_chance(attacker, target):
+
+#бой
+
+def hit_chance(attacker, target): # шанс попадания, зависит от ловкости атакующего и цели
     chance = 0.6 + 0.05 * (attacker.agility - target.agility)
     return min(0.95, max(0.1, chance))
 
@@ -127,7 +130,7 @@ def attack(attacker, target):
     return damage
 
 
-class Game:
+class Game: # основной класс игры, хранит состояние и логику
     def __init__(self, load_level, load_items):
         self.load_level = load_level
         self.load_items = load_items
@@ -136,14 +139,14 @@ class Game:
         self.log = []
         self.pending_item = None      # предмет, о котором ждём ответ y/n
         self.player = Player()
-        self._setup(load_level(self.level), load_items(self.level))
+        self._setup(load_level(self.level), load_items(self.level)) # это вызывает генератор карты и предметов, инициализирует врагов и игрока
 
-    def _setup(self, tiles, items_data):
+    def _setup(self, tiles, items_data): # это вызывается при старте игры и при переходе на новый уровень, инициализирует врагов и игрока   
         self.tiles = tiles
         self.enemies = []
         self.items = {}               # {(x, y): Item}
         n = 0
-        for y, row in enumerate(tiles):
+        for y, row in enumerate(tiles): # проходим по всей карте, ищем врагов и предметы, создаём их объекты и добавляем в список
             for x, tile in enumerate(row):
                 if tile in ENEMY_TYPES:
                     self.enemies.append(ENEMY_TYPES[tile](x, y, self.level))
@@ -156,46 +159,46 @@ class Game:
                     tiles[y][x] = '1'
         self.player.x, self.player.y = self.find('S')
 
-    def find(self, char):
+    def find(self, char): # ищет клетку с указанным символом на карте, возвращает координаты (x, y) или вызывает исключение
         for y, row in enumerate(self.tiles):
             for x, tile in enumerate(row):
                 if tile == char:
                     return x, y
         raise ValueError(f"на уровне {self.level} нет клетки '{char}'")
 
-    def next_level(self):
+    def next_level(self): # вызывается при переходе на следующий уровень, загружает новую карту и предметы, если они есть
         tiles = self.load_level(self.level + 1)
         if tiles is None:
             return
         self.level += 1
         self._setup(tiles, self.load_items(self.level))
 
-    def is_walkable(self, x, y):
+    def is_walkable(self, x, y): # проверяет, можно ли пройти по клетке (x, y), возвращает True/False
         return (0 <= y < len(self.tiles)
                 and 0 <= x < len(self.tiles[y])
                 and self.tiles[y][x] != '0')
 
-    def enemy_at(self, x, y):
+    def enemy_at(self, x, y): # возвращает врага на клетке (x, y) или None, если там нет врага
         for e in self.enemies:
             if e.x == x and e.y == y:
                 return e
         return None
 
-    def _fight(self, attacker, target):
+    def _fight(self, attacker, target): # вызывается при атаке, рассчитывает урон и логирует события боя
         dmg = attack(attacker, target)
         if dmg:
-            self.log.append(f"{attacker.name} -> {target.name}: -{dmg}")
+            self.log.append(f"{attacker.name} -> {target.name}: -{dmg}") # для дебага
         else:
-            self.log.append(f"{attacker.name} -> {target.name}: промах")
+            self.log.append(f"{attacker.name} -> {target.name}: промах") 
         if not target.alive:
             self.log.append(f"{target.name} погиб")
-            if isinstance(target, Enemy):
+            if isinstance(target, Enemy):   # если убит враг, то добавляем сокровища в инвентарь игрока
                 value = target.loot * self.level
                 self.player.inventory.append(Treasure("Сокровища", value))
                 self.log.append(f"+{value} сокровищ")
         self.log = self.log[-4:]
 
-    def move_player(self, dx, dy):
+    def move_player(self, dx, dy): # движение игрока, проверяет, есть ли враг или предмет на клетке, и вызывает соответствующие методы
         if self.pending_item:
             return
         nx, ny = self.player.x + dx, self.player.y + dy
@@ -213,9 +216,9 @@ class Game:
                 return
             if (nx, ny) in self.items:
                 self.pending_item = self.items[(nx, ny)]
-        self._tick()
+        self._tick() # вызывается после каждого хода игрока, чтобы обновить состояние врагов и проверить, не проиграл ли игрок
 
-    def _tick(self):
+    def _tick(self): # обновляет состояние врагов, проверяет, не проиграл ли игрок, и вызывает метод _move_enemy для каждого врага, который находится в радиусе действия
         self.enemies = [e for e in self.enemies if e.alive]
         for e in self.enemies:
             dist = abs(e.x - self.player.x) + abs(e.y - self.player.y)
@@ -230,7 +233,7 @@ class Game:
                 self.result = 0
                 break
 
-    def _move_enemy(self, e):
+    def _move_enemy(self, e): # движение врага, пытается приблизиться к игроку, если он в радиусе действия, и атакует, если находится рядом
         px, py = self.player.x, self.player.y
         dx = (px > e.x) - (px < e.x)
         dy = (py > e.y) - (py < e.y)
@@ -249,7 +252,7 @@ class Game:
                 e.x, e.y = nx, ny
                 break
 
-    def pick_up(self):
+    def pick_up(self): # игрок подбирает предмет, если он есть на клетке, добавляет его в инвентарь и удаляет из карты
         item = self.pending_item
         if item is None:
             return
@@ -257,5 +260,5 @@ class Game:
         self.player.inventory.append(item)
         self.pending_item = None
 
-    def decline(self):
+    def decline(self): # игрок отказывается от предмета, если он есть на клетке, просто удаляет его из карты
         self.pending_item = None

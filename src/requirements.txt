@@ -1,0 +1,2 @@
+# Нужен только на Windows (на macOS/Linux curses встроен в Python)
+windows-curses; sys_platform == "win32"

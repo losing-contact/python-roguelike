@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from domain.balance import (
     MIN_HEALTH_AFTER_EFFECT,
+    MIN_MAX_HEALTH,
     PLAYER_AGILITY,
     PLAYER_MAX_HEALTH,
     PLAYER_STRENGTH,
@@ -95,9 +96,10 @@ class Character(Entity):
 
     def _change(self, stat: Stat, amount: int) -> None:
         if stat is Stat.MAX_HEALTH:
-            # здоровье меняется на ту же величину, что и максимум
-            self.max_health += amount
-            self.health = min(self.health + amount, self.max_health)
+            old_max = self.max_health
+            self.max_health = max(MIN_MAX_HEALTH, old_max + amount) 
+            delta = self.max_health - old_max          # реальное изменение, с учётом зажима
+            self.health = min(self.health + delta, self.max_health)
             self.health = max(self.health, MIN_HEALTH_AFTER_EFFECT)
         elif stat is Stat.AGILITY:
             self.agility += amount

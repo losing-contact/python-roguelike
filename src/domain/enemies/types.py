@@ -40,8 +40,8 @@ SPECS: dict[EnemyKind, EnemySpec] = {
     ),
     EnemyKind.VAMPIRE: EnemySpec(
         EnemyKind.VAMPIRE, "Вампир",
-        max_health=8 * SCALE, agility=5, strength=2 * SCALE,
-        hostility=8, move_every=1,
+        max_health=8 * SCALE, agility=4, strength=2 * SCALE,
+        hostility=8, move_every=2,
         traits=frozenset({Trait.FIRST_HIT_MISS, Trait.DRAIN_MAX_HEALTH}),
     ),
 }

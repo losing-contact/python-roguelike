@@ -27,6 +27,11 @@ class Room:
         return [Pos(xx, yy) for yy in range(self.y, self.y + self.h)
                 for xx in range(self.x, self.x + self.w)]
 
+    def footprint(self) -> list[Pos]:
+        """Пол и окружающее кольцо стен (с проёмами и углами): всё, что видно изнутри комнаты."""
+        return [Pos(xx, yy) for yy in range(self.y - 1, self.y + self.h + 1)
+                for xx in range(self.x - 1, self.x + self.w + 1)]
+
     @property
     def center(self) -> Pos:
         return Pos(self.x + self.w // 2, self.y + self.h // 2)

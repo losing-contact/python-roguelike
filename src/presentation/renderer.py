@@ -64,9 +64,12 @@ def put_segments(screen, y: int, x: int, segments: list[tuple[str, int]], limit:
         x += len(text)
         limit -= len(text)
 
+def put_map(screen, pos, glyph, dim=False):
+    """Клетка карты на экране. Слева и сверху рамка, поэтому сдвиг на 1."""
+    put_glyph(screen, pos.y + 1, pos.x + 1, glyph, dim)
 
 def draw(screen, session: GameSession, messages: list[str]) -> None:
-    screen.erase()
+    screen.clear()
     level = session.level
     h = len(level.tiles)
     w = len(level.tiles[0])
@@ -76,18 +79,18 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
     for pos in session.exploration.seen - visible:
         tile = level.tile_at(pos)
         if tile in REMEMBERED_TILES:
-            put_glyph(screen, pos.y, pos.x, TILE_GLYPHS[tile], dim=True)
+            put_map(screen, pos, TILE_GLYPHS[tile], dim=True)           # память
     # 2. то, что видно прямо сейчас
     for pos in visible:
         glyph = TILE_GLYPHS.get(level.tile_at(pos))
         if glyph:
-            put_glyph(screen, pos.y, pos.x, glyph)
+            put_map(screen, pos, glyph)                                 # видимые тайлы
     for pos, item in level.items.items():
         if pos in visible:
-            put_glyph(screen, pos.y, pos.x, ITEM_GLYPHS[item.item_type])
+            put_map(screen, pos, ITEM_GLYPHS[item.item_type])           # предметы
     for enemy in level.enemies:
         if enemy.pos in visible:
-            put_glyph(screen, enemy.pos.y, enemy.pos.x, ENEMY_GLYPHS[enemy.kind])
+            put_map(screen, enemy.pos, ENEMY_GLYPHS[enemy.kind])        # враги
     p = session.player
     put(screen, p.pos.y + 1, p.pos.x + 1, PLAYER_GLYPH_CHAR, attr(Color.WALL, curses.A_BOLD))
 

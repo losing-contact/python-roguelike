@@ -26,6 +26,7 @@ from presentation.theme import (
     PLAYER_GLYPH_CHAR,
     TILE_GLYPHS,
     Glyph,
+    REMEMBERED_TILES,
 )
 
 HELP = "WASD ход · h оружие · j еда · k эликсир · e свиток · q выход"
@@ -49,9 +50,9 @@ def put(screen, y: int, x: int, text: str, style: int = 0) -> None:
         pass
 
 
-def put_glyph(screen, y: int, x: int, glyph: Glyph) -> None:
-    put(screen, y, x, glyph.char, attr(glyph.color, glyph.extra))
-
+def put_glyph(screen, y: int, x: int, glyph: Glyph, dim: bool = False) -> None:
+    extra = glyph.extra | curses.A_DIM if dim else glyph.extra
+    put(screen, y, x, glyph.char, attr(glyph.color, extra))
 
 def put_segments(screen, y: int, x: int, segments: list[tuple[str, int]], limit: int) -> None:
     """Куски текста разных стилей подряд, не длиннее limit символов."""
@@ -70,16 +71,23 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
     h = len(level.tiles)
     w = len(level.tiles[0])
 
-    # карта сдвинута на (1, 1): рамка занимает нулевую строку и нулевой столбец
-    for y, row in enumerate(level.tiles):
-        for x, tile in enumerate(row):
-            glyph = TILE_GLYPHS.get(tile)
-            if glyph:
-                put_glyph(screen, y + 1, x + 1, glyph)
+    visible = session.visible
+    # 1. память: увиденное раньше, но не видимое сейчас
+    for pos in session.exploration.seen - visible:
+        tile = level.tile_at(pos)
+        if tile in REMEMBERED_TILES:
+            put_glyph(screen, pos.y, pos.x, TILE_GLYPHS[tile], dim=True)
+    # 2. то, что видно прямо сейчас
+    for pos in visible:
+        glyph = TILE_GLYPHS.get(level.tile_at(pos))
+        if glyph:
+            put_glyph(screen, pos.y, pos.x, glyph)
     for pos, item in level.items.items():
-        put_glyph(screen, pos.y + 1, pos.x + 1, ITEM_GLYPHS[item.item_type])
+        if pos in visible:
+            put_glyph(screen, pos.y, pos.x, ITEM_GLYPHS[item.item_type])
     for enemy in level.enemies:
-        put_glyph(screen, enemy.pos.y + 1, enemy.pos.x + 1, ENEMY_GLYPHS[enemy.kind])
+        if enemy.pos in visible:
+            put_glyph(screen, enemy.pos.y, enemy.pos.x, ENEMY_GLYPHS[enemy.kind])
     p = session.player
     put(screen, p.pos.y + 1, p.pos.x + 1, PLAYER_GLYPH_CHAR, attr(Color.WALL, curses.A_BOLD))
 

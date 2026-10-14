@@ -126,10 +126,10 @@ def draw_hud(screen, session: GameSession, messages: list[str], h: int, w: int) 
         ("HP ", label), ("[", label),
         ("█" * p.health_blocks, hp_style),
         ("░" * max(0, p.max_blocks - p.health_blocks), label),
-        ("] ", label), (f"{p.health}/{p.max_health}", hp_style),
-        ("   СИЛА ", label), (str(p.strength), attr(Color.RED, curses.A_BOLD)),
-        ("   ЛОВК ", label), (str(p.agility), attr(Color.CYAN, curses.A_BOLD)),
-        ("   * ", gold), (str(p.backpack.treasure), gold),
+        ("] ", label), (f"{p.health}/{p.max_health}", hp_style), (" |", label),
+        ("   СИЛА ", label), (str(p.strength), attr(Color.RED, curses.A_BOLD)), (" |", label),
+        ("   ЛОВК ", label), (str(p.agility), attr(Color.CYAN, curses.A_BOLD)), (" |", label),
+        ("   * ", gold), (str(p.backpack.treasure), gold), (" |", label),
         ("   ОРУЖИЕ ", label), (weapon, normal),   # длинное название обрежется, а не сломает рамку
     ], limit)
 

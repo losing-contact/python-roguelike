@@ -39,4 +39,4 @@ ITEM_GLYPHS: dict[ItemType, Glyph] = {
 
 PLAYER_GLYPH_CHAR = "@"
 # Что остаётся нарисованным на уже невидимых, но увиденных ранее клетках.
-REMEMBERED_TILES = frozenset({Tile.WALL, Tile.DOORWAY, Tile.CORRIDOR}
+REMEMBERED_TILES = frozenset({Tile.WALL, Tile.DOORWAY, Tile.CORRIDOR})

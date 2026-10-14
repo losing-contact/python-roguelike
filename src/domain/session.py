@@ -22,6 +22,8 @@ from domain.models.level import Level
 from domain.models.position import Pos
 from domain.models.stats import RunStats
 from domain.models.tile import Tile
+from domain.models.exploration import Exploration
+from domain.visibility import compute_visible
 
 LevelGenerator = Callable[[int, random.Random, int], Level]
 
@@ -47,6 +49,9 @@ class GameSession:
         self.player = Character()
         self.level = self._generate(1, self.rng, total_levels)
         self.player.pos = self.level.start
+        self.exploration = Exploration()  # что игрок видел на этом уровне (сохраняется)
+        self.visible: set[Pos] = set()  # что видно прямо сейчас (выводится из позиции)
+        self._refresh_vision()
 
     # ------------------------------------------------------------------
     # Публичный интерфейс
@@ -67,7 +72,13 @@ class GameSession:
             self._end_of_turn(events)
         for event in events:
             self.stats.record(event)
+        self._refresh_vision()
         return events
+
+    def _refresh_vision(self) -> None:
+        """Пересчитывает видимое и дописывает его в память об уровне."""
+        self.visible = compute_visible(self.level, self.player.pos)
+        self.exploration.seen |= self.visible
 
     # ------------------------------------------------------------------
     # Действия игрока (возвращают True, если потратили ход)
@@ -116,6 +127,7 @@ class GameSession:
         number = self.level.number + 1
         self.level = self._generate(number, self.rng, self.total_levels)
         self.player.pos = self.level.start
+        self.exploration = Exploration()
         events.append(ev.LevelChanged(number))
 
     def _use_item(self, item_type: ItemType, slot: int | None, events: list[ev.Event]) -> bool:

@@ -30,4 +30,6 @@ def random_walk(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
 PATTERNS: dict[EnemyKind, Pattern] = {
     EnemyKind.ZOMBIE: random_walk,
     EnemyKind.VAMPIRE: random_walk,
+    EnemyKind.GHOST: random_walk,
 }
+

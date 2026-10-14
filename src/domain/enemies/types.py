@@ -10,6 +10,7 @@ from domain.balance import SCALE
 class EnemyKind(Enum):
     ZOMBIE = "zombie"
     VAMPIRE = "vampire"
+    GHOST = "ghost"
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
 
@@ -43,5 +44,11 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         max_health=8 * SCALE, agility=5, strength=2 * SCALE,
         hostility=8, move_every=1,
         traits=frozenset({Trait.FIRST_HIT_MISS, Trait.DRAIN_MAX_HEALTH}),
+    ),
+    EnemyKind.GHOST: EnemySpec(
+        EnemyKind.GHOST, "Призрак",
+        max_health=6 * SCALE, agility=4, strength=1 * SCALE,
+        hostility=7, move_every=1,
+        traits=frozenset({Trait.FIRST_HIT_MISS}),
     ),
 }

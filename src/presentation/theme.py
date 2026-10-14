@@ -19,7 +19,7 @@ class Glyph(NamedTuple):
 TILE_GLYPHS: dict[Tile, Glyph] = {
     Tile.WALL: Glyph("█", Color.WALL, curses.A_DIM),
     Tile.FLOOR: Glyph(".", Color.WALL, curses.A_DIM),
-    Tile.DOORWAY: Glyph("+", Color.YELLOW),
+    Tile.DOORWAY: Glyph("+", Color.WALL, curses.A_DIM),
     Tile.CORRIDOR: Glyph("░", Color.WALL),
     Tile.EXIT: Glyph(">", Color.CYAN, curses.A_BOLD),
 }
@@ -30,11 +30,11 @@ ENEMY_GLYPHS: dict[EnemyKind, Glyph] = {
 }
 
 ITEM_GLYPHS: dict[ItemType, Glyph] = {
-    ItemType.FOOD: Glyph(":", Color.YELLOW),
-    ItemType.ELIXIR: Glyph("!", Color.MAGENTA),
-    ItemType.SCROLL: Glyph("?", Color.CYAN),
-    ItemType.WEAPON: Glyph(")", Color.WALL, curses.A_BOLD),
-    ItemType.TREASURE: Glyph("*", Color.YELLOW, curses.A_BOLD),
+    ItemType.FOOD: Glyph("❤︎", Color.GREEN, curses.A_BOLD),
+    ItemType.ELIXIR: Glyph("𐃯", Color.MAGENTA),
+    ItemType.SCROLL: Glyph("🕮", Color.YELLOW, curses.A_DIM),
+    ItemType.WEAPON: Glyph("༒︎", Color.WALL, curses.A_DIM),
+    ItemType.TREASURE: Glyph("$", Color.YELLOW, curses.A_BOLD),
 }
 
 PLAYER_GLYPH_CHAR = "@"

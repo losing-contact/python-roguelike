@@ -14,9 +14,6 @@ ROOM_MIN_W, ROOM_MAX_W = 5, 20    # размеры пола комнаты (бе
 ROOM_MIN_H, ROOM_MAX_H = 3, 4
 EXTRA_CORRIDORS = (0, 2)          # сколько лишних коридоров добавить к остовному дереву
 
-# --- зрение ------------------------------------------------------------
-VISION_RADIUS = 8                 # как далеко видно из коридора (в клетках, по прямой)
-
 # --- персонаж ----------------------------------------------------------
 PLAYER_MAX_HEALTH = 10 * SCALE
 PLAYER_AGILITY = 3
@@ -40,3 +37,12 @@ USEFUL_END = 3                    # ... и на последнем (между �
 VAMPIRE_CHANCE_START = 0.1
 VAMPIRE_CHANCE_STEP = 0.05
 VAMPIRE_CHANCE_MAX = 0.6
+
+GHOST_CHANCE = 0.15
+GHOST_VISIBLE_TURNS = (3, 6)      # сколько ходов видно
+GHOST_INVISIBLE_TURNS = (4, 8)    # сколько ходов невидимо
+
+
+
+
+VISION_RADIUS = 8 

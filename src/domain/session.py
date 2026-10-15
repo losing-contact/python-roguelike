@@ -9,6 +9,8 @@ import random
 from collections.abc import Callable
 from enum import Enum
 
+from domain.enemies import visibility
+
 from domain import combat
 from domain import events as ev
 from domain.balance import LEVELS
@@ -189,6 +191,7 @@ class GameSession:
             events.append(ev.EffectExpired())
         for enemy in list(self.level.enemies):
             if enemy.alive:
+                visibility.tick(enemy, self.player.pos, self.rng)   # добавить
                 self._enemy_turn(enemy, events)
             if not self.player.alive:
                 self.state = GameState.LOST

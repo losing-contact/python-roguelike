@@ -89,7 +89,7 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
         if pos in visible:
             put_map(screen, pos, ITEM_GLYPHS[item.item_type])           # предметы
     for enemy in level.enemies:
-        if enemy.pos in visible:
+        if enemy.pos in visible and not enemy.invisible:
             put_map(screen, enemy.pos, ENEMY_GLYPHS[enemy.kind])        # враги
     p = session.player
     put(screen, p.pos.y + 1, p.pos.x + 1, PLAYER_GLYPH_CHAR, attr(Color.WALL, curses.A_BOLD))
@@ -156,3 +156,6 @@ def draw_hud(screen, session: GameSession, messages: list[str], h: int, w: int) 
     help_text = HELP[:limit]
     help_row = h + 2 + STATUS_ROWS + MESSAGE_ROWS + 2
     put(screen, help_row, 1 + (w - len(help_text)) // 2, help_text, label)
+
+
+

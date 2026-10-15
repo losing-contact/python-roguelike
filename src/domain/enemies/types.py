@@ -19,6 +19,7 @@ class Trait(Enum):
 
     FIRST_HIT_MISS = "first_hit_miss"      # первый удар по такому врагу - всегда промах
     DRAIN_MAX_HEALTH = "drain_max_health"  # успешная атака отнимает максимальное здоровье
+    INVISIBLE_PHASES = "invisible_phases"  # периодически невидим, пока игрок не вступил в бой
 
 
 @dataclass(frozen=True)
@@ -47,8 +48,8 @@ SPECS: dict[EnemyKind, EnemySpec] = {
     ),
     EnemyKind.GHOST: EnemySpec(
         EnemyKind.GHOST, "Призрак",
-        max_health=6 * SCALE, agility=4, strength=1 * SCALE,
-        hostility=7, move_every=1,
-        traits=frozenset({Trait.FIRST_HIT_MISS}),
+        max_health=2 * SCALE, agility=8, strength=SCALE // 2,
+        hostility=3, move_every=3,
+        traits=frozenset({Trait.FIRST_HIT_MISS, Trait.INVISIBLE_PHASES}),
     ),
 }

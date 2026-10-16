@@ -29,6 +29,8 @@ from presentation.theme import (
     REMEMBERED_TILES,
 )
 
+from src.presentation.main_menu import ITEMS
+
 HELP = "WASD ход · h оружие · j еда · k эликсир · e свиток · q выход"
 
 STATUS_ROWS = 1
@@ -68,36 +70,30 @@ def put_map(screen, pos, glyph, dim=False):
     """Клетка карты на экране. Слева и сверху рамка, поэтому сдвиг на 1."""
     put_glyph(screen, pos.y + 1, pos.x + 1, glyph, dim)
 
-def draw(screen, session: GameSession, messages: list[str]) -> None:
-    screen.clear()
-    level = session.level
-    h = len(level.tiles)
-    w = len(level.tiles[0])
+def draw(screen, index, can_continue):
+    screen.clear()   # полная перерисовка: на экране не должно остаться кусков игры
+    rows, cols = screen.getmaxyx()
+    width = max(len(text) for _, text in ITEMS) + 2
+    left = (cols - width) // 2
+    top = rows // 2 - 4
 
-    visible = session.visible
-    # 1. память: увиденное раньше, но не видимое сейчас
-    for pos in session.exploration.seen - visible:
-        tile = level.tile_at(pos)
-        if tile in REMEMBERED_TILES:
-            put_map(screen, pos, TILE_GLYPHS[tile], dim=True)           # память
-    # 2. то, что видно прямо сейчас
-    for pos in visible:
-        glyph = TILE_GLYPHS.get(level.tile_at(pos))
-        if glyph:
-            put_map(screen, pos, glyph)                                 # видимые тайлы
-    for pos, item in level.items.items():
-        if pos in visible:
-            put_map(screen, pos, ITEM_GLYPHS[item.item_type])           # предметы
-    for enemy in level.enemies:
-        if enemy.pos in visible:
-            put_map(screen, enemy.pos, ENEMY_GLYPHS[enemy.kind])        # враги
-    p = session.player
-    put(screen, p.pos.y + 1, p.pos.x + 1, PLAYER_GLYPH_CHAR, attr(Color.WALL, curses.A_BOLD))
+    title = "R O G U E"
+    put(screen, top, (cols - len(title)) // 2, title, attr(Color.CYAN, curses.A_BOLD))
 
-    draw_frame(screen, session, h, w)
-    draw_hud(screen, session, messages, h, w)
+    for i, (name, text) in enumerate(ITEMS):
+        if name == "continue" and not can_continue:
+            style = attr(Color.WALL, curses.A_DIM)       # недоступно
+        elif i == index:
+            style = attr(Color.GREEN, curses.A_REVERSE)  # выбранный пункт
+        else:
+            style = attr(Color.WALL)
+        line = ("> " if i == index else "  ") + text
+        put(screen, top + 2 + i, left, line.ljust(width), style)
+
+    hint = "W/S или стрелки - выбор, Enter - выбрать, q - выход"
+    put(screen, top + 3 + len(ITEMS), (cols - len(hint)) // 2, hint,
+        attr(Color.WALL, curses.A_DIM))
     screen.refresh()
-
 
 def draw_frame(screen, session: GameSession, h: int, w: int) -> None:
     border = attr(Color.WALL, curses.A_BOLD)

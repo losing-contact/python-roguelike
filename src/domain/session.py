@@ -36,21 +36,28 @@ class GameState(Enum):
 
 class GameSession:
     def __init__(
-        self,
-        rng: random.Random | None = None,
-        total_levels: int = LEVELS,
-        generator: LevelGenerator = generate_level,
+            self,
+            rng: random.Random | None = None,
+            total_levels: int = LEVELS,
+            generator: LevelGenerator = generate_level,
+            player: Character | None = None,
+            level: Level | None = None,
+            stats: RunStats | None = None,
+            exploration: Exploration | None = None,
     ) -> None:
+        # player, level, stats и exploration нужны, чтобы собрать сессию из сохранения
         self.rng = rng or random.Random()
         self.total_levels = total_levels
         self._generate = generator
         self.state = GameState.PLAYING
-        self.stats = RunStats()
-        self.player = Character()
-        self.level = self._generate(1, self.rng, total_levels)
-        self.player.pos = self.level.start
-        self.exploration = Exploration()  # что игрок видел на этом уровне (сохраняется)
-        self.visible: set[Pos] = set()  # что видно прямо сейчас (выводится из позиции)
+        self.stats = stats or RunStats()
+        self.player = player or Character()
+        if level is None:
+            level = self._generate(1, self.rng, total_levels)
+            self.player.pos = level.start
+        self.level = level
+        self.exploration = exploration or Exploration()
+        self.visible: set[Pos] = set()
         self._refresh_vision()
 
     # ------------------------------------------------------------------

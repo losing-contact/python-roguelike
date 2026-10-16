@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import curses
+from domain.ports import SaveRepository
 
+from domain import events as ev
 from domain.balance import LEVEL_H, LEVEL_W
 from domain.session import GameSession, GameState
 from presentation import end_screen, menus
@@ -16,7 +18,8 @@ MIN_COLS = LEVEL_W
 MESSAGE_LIMIT = 6
 
 
-def run(screen, session: GameSession) -> None:
+def run(screen, session: GameSession, repo: SaveRepository) -> None:   # новый параметр
+
     try:
         curses.curs_set(0)
     except curses.error:
@@ -51,6 +54,10 @@ def run(screen, session: GameSession) -> None:
             end_screen.show(screen, session.state, session.stats)
             return
 
+    del messages[:-MESSAGE_LIMIT]
+
+    if any(isinstance(e, ev.LevelChanged) for e in events):  # после этой строки
+        repo.save_session(session)
 
 def _wait_for_big_enough_terminal(screen) -> bool:
     """Пока окно мало - просим увеличить, а не падаем с curses.error. False - игрок вышел."""

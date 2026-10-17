@@ -12,3 +12,14 @@ choice='new'
 break: q
 choice='quit'
 choice='new'
+break: q
+choice='continue'
+break: q
+choice='quit'
+choice='continue'
+break: игра закончилась
+choice='records'
+choice='new'
+break: q
+choice='records'
+choice='records'

@@ -12,14 +12,15 @@ from presentation.colors import init_colors
 from presentation.input import OpenMenu, Quit, read_key, translate
 from presentation.messages import format_event
 from presentation.renderer import draw, put
+from presentation import end_screen, main_menu, menus, records_screen
 
 MIN_ROWS = LEVEL_H + 3     # карта + статус + сообщения + подсказка
 MIN_COLS = LEVEL_W
 MESSAGE_LIMIT = 6
 
 
-def run(screen, session: GameSession, repo: SaveRepository) -> None:   # новый параметр
-
+def run(screen, repo: SaveRepository, new_game) -> None:
+    """Главное меню. new_game - функция, которая создаёт новую игру."""
     try:
         curses.curs_set(0)
     except curses.error:
@@ -27,37 +28,59 @@ def run(screen, session: GameSession, repo: SaveRepository) -> None:   # нов�
     screen.keypad(True)
     init_colors()
 
+    while True:
+        saved = repo.load_session()
+        choice = main_menu.choose(screen, saved is not None)
+        log(f"choice={choice!r}")
+        if choice == "new":
+            play(screen, new_game(), repo)
+        elif choice == "continue":
+            play(screen, saved, repo)
+        elif choice == "records":
+            records_screen.show(screen, repo.top_records())
+        else:
+            return
+
+def play(screen, session: GameSession, repo: SaveRepository) -> None:
+    """Играет, пока игрок не выйдет в меню или игра не закончится."""
     messages: list[str] = []
     while True:
         if not _wait_for_big_enough_terminal(screen):
-            return
+            log("break: окно мало")
+            break
         draw(screen, session, messages)
 
         request = translate(read_key(screen))
         if request is None:
             continue
         if isinstance(request, Quit):
-            return
+            log("break: q")
+            break
         if isinstance(request, OpenMenu):
-            command = menus.choose_item(screen, session.player, request.item_type)
-            if command is None:
+            request = menus.choose_item(screen, session.player, request.item_type)
+            if request is None:
                 continue
-        else:
-            command = request
-
-        events = session.handle(command)
-        messages.extend(text for e in events if (text := format_event(e)))
-        del messages[:-MESSAGE_LIMIT]
-
+        for event in session.handle(request):
+            text = format_event(event)
+            if text:
+                messages.append(text)
+        messages = messages[-MESSAGE_LIMIT:]
         if session.state is not GameState.PLAYING:
+            log("break: игра закончилась")
             draw(screen, session, messages)
             end_screen.show(screen, session.state, session.stats)
-            return
+            break
 
-    del messages[:-MESSAGE_LIMIT]
+    finish(session, repo)
 
-    if any(isinstance(e, ev.LevelChanged) for e in events):  # после этой строки
-        repo.save_session(session)
+
+def finish(session: GameSession, repo: SaveRepository) -> None:
+    """Что делать с игрой, когда мы её покинули: сохранить или записать результат."""
+    if session.state is GameState.PLAYING:
+        repo.save_session(session)      # вышли в меню: запоминаем, где остановились
+    else:
+        repo.add_record(session.stats)  # игра закончилась: результат в таблицу рекордов
+        repo.delete_session()           # а сохранение больше не нужно
 
 def _wait_for_big_enough_terminal(screen) -> bool:
     """Пока окно мало - просим увеличить, а не падаем с curses.error. False - игрок вышел."""
@@ -72,3 +95,8 @@ def _wait_for_big_enough_terminal(screen) -> bool:
         key = read_key(screen)
         if isinstance(key, str) and key.lower() in ("q", "й"):
             return False
+
+
+def log(text):
+    with open("debug.log", "a", encoding="utf-8") as f:
+        f.write(text + "\n")

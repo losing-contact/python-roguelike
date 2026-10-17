@@ -29,7 +29,9 @@ from presentation.theme import (
     REMEMBERED_TILES,
 )
 
-from src.presentation.main_menu import ITEMS
+from presentation.menu_items import ITEMS
+
+from domain.models.position import Pos
 
 HELP = "WASD ход · h оружие · j еда · k эликсир · e свиток · q выход"
 
@@ -70,8 +72,10 @@ def put_map(screen, pos, glyph, dim=False):
     """Клетка карты на экране. Слева и сверху рамка, поэтому сдвиг на 1."""
     put_glyph(screen, pos.y + 1, pos.x + 1, glyph, dim)
 
-def draw(screen, index, can_continue):
-    screen.clear()   # полная перерисовка: на экране не должно остаться кусков игры
+
+def draw_menu(screen, index, can_continue):
+    """Отрисовка главного меню."""
+    screen.clear()   # полная перерисовка
     rows, cols = screen.getmaxyx()
     width = max(len(text) for _, text in ITEMS) + 2
     left = (cols - width) // 2
@@ -94,6 +98,53 @@ def draw(screen, index, can_continue):
     put(screen, top + 3 + len(ITEMS), (cols - len(hint)) // 2, hint,
         attr(Color.WALL, curses.A_DIM))
     screen.refresh()
+
+
+def draw(screen, session: GameSession, messages: list[str]) -> None:
+    """Полная отрисовка игрового процесса: рамка, HUD, карта, персонажи."""
+    screen.clear()
+    h, w = session.level.height, session.level.width
+
+    # 1. Рисуем рамку и HUD
+    draw_frame(screen, session, h, w)
+    draw_hud(screen, session, messages, h, w)
+
+    # 2. Отрисовка карты (тайлы)
+    for y in range(session.level.height):
+        for x in range(session.level.width):
+            pos = Pos(x, y)
+
+            if pos in session.visible:
+                tile = session.level.tile_at(pos)
+                glyph = TILE_GLYPHS.get(tile)
+                if glyph:
+                    put_map(screen, pos, glyph)
+            elif pos in session.exploration.seen:
+                tile = session.level.tile_at(pos)
+                glyph = TILE_GLYPHS.get(tile) if tile in REMEMBERED_TILES else None
+                if glyph:
+                    put_map(screen, pos, glyph, dim=True)
+    # 3. Отрисовка предметов
+    for pos, item in session.level.items.items():
+        if pos in session.visible:
+            glyph = ITEM_GLYPHS.get(item.item_type)
+            if glyph:
+                put_map(screen, pos, glyph)
+
+    # 4. Отрисовка врагов
+    for enemy in session.level.enemies:
+        if enemy.pos in session.visible:
+            glyph = ENEMY_GLYPHS.get(enemy.kind)
+            if glyph:
+                put_map(screen, enemy.pos, glyph)
+
+    # 5. Отрисовка игрока
+    if session.player:
+        player_glyph = Glyph(PLAYER_GLYPH_CHAR, Color.YELLOW, curses.A_BOLD)
+        put_map(screen, session.player.pos, player_glyph)
+
+    screen.refresh()
+
 
 def draw_frame(screen, session: GameSession, h: int, w: int) -> None:
     border = attr(Color.WALL, curses.A_BOLD)

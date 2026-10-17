@@ -31,6 +31,7 @@ def run(screen, repo: SaveRepository, new_game) -> None:
     while True:
         saved = repo.load_session()
         choice = main_menu.choose(screen, saved is not None)
+        log(f"choice={choice!r}")
         if choice == "new":
             play(screen, new_game(), repo)
         elif choice == "continue":
@@ -45,6 +46,7 @@ def play(screen, session: GameSession, repo: SaveRepository) -> None:
     messages: list[str] = []
     while True:
         if not _wait_for_big_enough_terminal(screen):
+            log("break: окно мало")
             break
         draw(screen, session, messages)
 
@@ -52,9 +54,19 @@ def play(screen, session: GameSession, repo: SaveRepository) -> None:
         if request is None:
             continue
         if isinstance(request, Quit):
+            log("break: q")
             break
-        ...                                   # дальше без изменений, но в конце:
+        if isinstance(request, OpenMenu):
+            request = menus.choose_item(screen, session.player, request.item_type)
+            if request is None:
+                continue
+        for event in session.handle(request):
+            text = format_event(event)
+            if text:
+                messages.append(text)
+        messages = messages[-MESSAGE_LIMIT:]
         if session.state is not GameState.PLAYING:
+            log("break: игра закончилась")
             draw(screen, session, messages)
             end_screen.show(screen, session.state, session.stats)
             break
@@ -83,3 +95,8 @@ def _wait_for_big_enough_terminal(screen) -> bool:
         key = read_key(screen)
         if isinstance(key, str) and key.lower() in ("q", "й"):
             return False
+
+
+def log(text):
+    with open("debug.log", "a", encoding="utf-8") as f:
+        f.write(text + "\n")

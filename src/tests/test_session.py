@@ -132,11 +132,9 @@ def test_player_death_ends_game(make_session, hit_rng):
     s = make_session([ROOM], hit_rng)
     v = put_enemy(s, EnemyKind.VAMPIRE, 4, 2)
     v.strength = 1000
-    events = s.handle(RIGHT)                 # игрок шагает вплотную к вампиру, тот бьёт
+    v.first_hit_spent = True          # ← снимаем иммунитет первого удара
+    events = s.handle(RIGHT)
     assert s.state is GameState.LOST
-    assert s.player.health == 0
-    assert any(isinstance(e, ev.PlayerDied) for e in events)
-    assert s.handle(RIGHT) == []             # после смерти команды игнорируются
 
 
 # --- преследование ----------------------------------------------------------

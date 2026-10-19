@@ -231,9 +231,9 @@ class GameSession:
             if path:
                 enemy.pos = path[0]
                 return
-        step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
-        if step is not None:
-            enemy.pos = step
+            step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
+            if step is not None and step != player_pos:
+                enemy.pos = step
 
     def _enemy_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
         result = combat.resolve_attack(enemy, self.player, self.rng)

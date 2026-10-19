@@ -12,3 +12,7 @@ venv/
 .DS_Store
 
 domain/levels/
+
+debug.log
+key.log
+saves/

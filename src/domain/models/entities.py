@@ -129,3 +129,6 @@ class Enemy(Entity):
     @property
     def traits(self) -> frozenset[Trait]:
         return self.spec.traits
+
+    invisible: bool = False
+    phase_turns: int = 3

@@ -40,3 +40,7 @@ USEFUL_END = 3                    # ... и на последнем (между �
 VAMPIRE_CHANCE_START = 0.1
 VAMPIRE_CHANCE_STEP = 0.05
 VAMPIRE_CHANCE_MAX = 0.6
+
+GHOST_CHANCE = 0.15
+GHOST_VISIBLE_TURNS = (3, 6)      # сколько ходов видно
+GHOST_INVISIBLE_TURNS = (4, 8)    # сколько ходов невидимо

@@ -14,6 +14,7 @@ from domain import events as ev
 from domain.balance import LEVELS
 from domain.commands import Command, Move, UseItem
 from domain.enemies.behaviors import PATTERNS
+from domain.enemies import invisibility
 from domain.generation.level_factory import generate_level
 from domain.geometry import bfs_path
 from domain.models.entities import Character, Enemy
@@ -195,6 +196,7 @@ class GameSession:
         for _ in self.player.tick_effects():
             events.append(ev.EffectExpired())
         for enemy in list(self.level.enemies):
+            invisibility.tick(enemy, self.player.pos, self.rng)
             if enemy.alive:
                 self._enemy_turn(enemy, events)
             if not self.player.alive:

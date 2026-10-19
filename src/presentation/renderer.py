@@ -133,7 +133,7 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
 
     # 4. Отрисовка врагов
     for enemy in session.level.enemies:
-        if enemy.pos in session.visible:
+        if enemy.pos in session.visible and not enemy.invisible:
             glyph = ENEMY_GLYPHS.get(enemy.kind)
             if glyph:
                 put_map(screen, enemy.pos, glyph)
@@ -203,3 +203,6 @@ def draw_hud(screen, session: GameSession, messages: list[str], h: int, w: int) 
     help_text = HELP[:limit]
     help_row = h + 2 + STATUS_ROWS + MESSAGE_ROWS + 2
     put(screen, help_row, 1 + (w - len(help_text)) // 2, help_text, label)
+
+
+

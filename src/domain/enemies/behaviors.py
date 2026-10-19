@@ -27,7 +27,32 @@ def random_walk(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
     return rng.choice(options) if options else None
 
 
+def room_cells(level: Level, start: Pos) -> list[Pos]:
+    """Клетки пола комнаты, где стоит start (заливка по Tile.FLOOR)."""
+    seen = {start}
+    stack = [start]
+    while stack:
+        cell = stack.pop()
+        for neighbor in cell.neighbors():
+            if neighbor not in seen and level.tile_at(neighbor) is Tile.FLOOR:
+                seen.add(neighbor)
+                stack.append(neighbor)
+    return list(seen)
+
+
+def teleport(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
+    """Прыжок на случайную свободную клетку той же комнаты (привидение)."""
+    if level.tile_at(enemy.pos) is not Tile.FLOOR:
+        return random_walk(enemy, level, rng)      # в коридоре - обычный шаг
+    options = [
+        p for p in room_cells(level, enemy.pos)
+        if p != enemy.pos and level.can_enemy_enter(p)
+    ]
+    return rng.choice(options) if options else None
+
+
 PATTERNS: dict[EnemyKind, Pattern] = {
     EnemyKind.ZOMBIE: random_walk,
     EnemyKind.VAMPIRE: random_walk,
+    EnemyKind.GHOST: teleport,
 }

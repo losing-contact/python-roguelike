@@ -231,6 +231,7 @@ class GameSession:
             if path:
                 enemy.pos = path[0]
                 return
+
             step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
             if step is not None and step != player_pos:
                 enemy.pos = step

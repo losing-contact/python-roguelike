@@ -11,6 +11,7 @@ class EnemyKind(Enum):
     ZOMBIE = "zombie"
     VAMPIRE = "vampire"
     GHOST = "ghost"
+    OGRE = "ogre"
     
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
@@ -51,5 +52,11 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         max_health=2 * SCALE, agility=8, strength=SCALE // 2,
         hostility=3, move_every=2,
         traits=frozenset({Trait.INVISIBLE_PHASES}),
+    ),
+        EnemyKind.OGRE: EnemySpec(
+        EnemyKind.OGRE, "Огр",
+        max_health=10 * SCALE, agility=2, strength=3 * SCALE,
+        hostility=5, move_every=1,
+        traits=frozenset(),
     ),
 }

@@ -55,4 +55,5 @@ PATTERNS: dict[EnemyKind, Pattern] = {
     EnemyKind.ZOMBIE: random_walk,
     EnemyKind.VAMPIRE: random_walk,
     EnemyKind.GHOST: teleport,
+    EnemyKind.OGRE: random_walk,
 }

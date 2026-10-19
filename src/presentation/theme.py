@@ -28,6 +28,7 @@ ENEMY_GLYPHS: dict[EnemyKind, Glyph] = {
     EnemyKind.ZOMBIE: Glyph("z", Color.GREEN),
     EnemyKind.VAMPIRE: Glyph("v", Color.RED),
     EnemyKind.GHOST: Glyph("g", Color.WALL, curses.A_BOLD),
+    EnemyKind.OGRE: Glyph("O", Color.YELLOW, curses.A_BOLD),
 }
 
 ITEM_GLYPHS: dict[ItemType, Glyph] = {

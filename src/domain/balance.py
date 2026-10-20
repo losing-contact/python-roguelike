@@ -44,3 +44,7 @@ VAMPIRE_CHANCE_MAX = 0.6
 GHOST_CHANCE = 0.15
 GHOST_VISIBLE_TURNS = (3, 6)      # сколько ходов видно
 GHOST_INVISIBLE_TURNS = (4, 8)    # сколько ходов невидимо
+
+
+OGRE_CHANCE = 0.9
+

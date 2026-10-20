@@ -11,6 +11,7 @@ class EnemyKind(Enum):
     ZOMBIE = "zombie"
     VAMPIRE = "vampire"
     GHOST = "ghost"
+    OGRE = "ogre"
     
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
@@ -21,7 +22,7 @@ class Trait(Enum):
     FIRST_HIT_MISS = "first_hit_miss"      # первый удар по такому врагу - всегда промах
     DRAIN_MAX_HEALTH = "drain_max_health"  # успешная атака отнимает максимальное здоровье
     INVISIBLE_PHASES = "invisible_phases"  # периодически невидим, пока игрок не вступил в бой
-
+    REST_AFTER_ATTACK = "rest_after_attack"  # после атаки отдыхает ход, следующий удар гарантированно попадает
 @dataclass(frozen=True)
 class EnemySpec:
     kind: EnemyKind
@@ -32,7 +33,7 @@ class EnemySpec:
     hostility: int             # с какого расстояния (по пути) начинается преследование
     move_every: int = 1        # враг действует раз в N ходов игрока
     traits: frozenset[Trait] = frozenset()
-
+    step_size: int = 1         # сколько клеток проходит за один ход
 
 SPECS: dict[EnemyKind, EnemySpec] = {
     EnemyKind.ZOMBIE: EnemySpec(
@@ -51,5 +52,11 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         max_health=2 * SCALE, agility=8, strength=SCALE // 2,
         hostility=3, move_every=2,
         traits=frozenset({Trait.INVISIBLE_PHASES}),
+    ),
+        EnemyKind.OGRE: EnemySpec(
+        EnemyKind.OGRE, "Огр",
+        max_health=10 * SCALE, agility=2, strength=3 * SCALE,
+        hostility=5, move_every=3, step_size=2,
+        traits=frozenset({Trait.REST_AFTER_ATTACK}),
     ),
 }

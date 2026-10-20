@@ -51,8 +51,24 @@ def teleport(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
     return rng.choice(options) if options else None
 
 
+def two_step_walk(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
+    """Шаг на две клетки: сначала соседняя клетка, потом ещё одна от неё (огр)."""
+    in_room = level.tile_at(enemy.pos) is Tile.FLOOR
+
+    def ok(p: Pos) -> bool:
+        return level.can_enemy_enter(p) and (not in_room or level.tile_at(p) is Tile.FLOOR)
+
+    options = [
+        second
+        for first in enemy.pos.neighbors() if ok(first)
+        for second in first.neighbors() if second != enemy.pos and ok(second)
+    ]
+    return rng.choice(options) if options else random_walk(enemy, level, rng)
+
+
 PATTERNS: dict[EnemyKind, Pattern] = {
     EnemyKind.ZOMBIE: random_walk,
     EnemyKind.VAMPIRE: random_walk,
     EnemyKind.GHOST: teleport,
+    EnemyKind.OGRE: two_step_walk,
 }

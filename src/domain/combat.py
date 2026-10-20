@@ -34,13 +34,21 @@ def hit_chance(attacker: Entity, target: Entity) -> float:
 
 
 def resolve_attack(attacker: Entity, target: Entity, rng: random.Random) -> AttackResult:
+
+    # особенность огра: после удара отдыхает, а следующий удар гарантированно попадает
+    ogre = Trait.REST_AFTER_ATTACK in attacker.traits
+    guaranteed = ogre and attacker.counter_ready
+    if ogre:
+        attacker.counter_ready = False
+        attacker.resting = True
+
     # особенность вампира: первый удар по нему всегда мимо
     if Trait.FIRST_HIT_MISS in target.traits and not target.first_hit_spent:
         target.first_hit_spent = True
         return AttackResult(hit=False)
 
     # 1. попадание
-    if rng.random() > hit_chance(attacker, target):
+    if not guaranteed and rng.random() > hit_chance(attacker, target):
         return AttackResult(hit=False)
 
     # 2. урон

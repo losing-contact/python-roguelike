@@ -1,10 +1,9 @@
-"""Точка входа и единственное место, где слои собираются вместе (composition root).
+#точка входа 
 
-Запуск из папки src:  python3 main.py [--seed N]
-"""
-from __future__ import annotations
 
-import argparse
+from __future__ import annotations 
+
+import argparse 
 import random
 import sys
 from pathlib import Path

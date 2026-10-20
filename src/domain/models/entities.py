@@ -132,3 +132,5 @@ class Enemy(Entity):
 
     invisible: bool = False
     phase_turns: int = 3
+    resting: bool = False
+    counter_ready: bool = False

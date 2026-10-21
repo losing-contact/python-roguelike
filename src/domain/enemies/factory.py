@@ -8,7 +8,8 @@ from domain.balance import (
     VAMPIRE_CHANCE_START,
     VAMPIRE_CHANCE_STEP,
     GHOST_CHANCE,
-    OGRE_CHANCE
+    OGRE_CHANCE,
+    WIZZARD_CHANCE
 )
 from domain.enemies.types import SPECS, EnemyKind
 from domain.models.entities import Enemy
@@ -42,4 +43,7 @@ def pick_enemy_kind(level: int, rng: random.Random) -> EnemyKind:
         return EnemyKind.GHOST
     if roll < vampire_chance + GHOST_CHANCE + OGRE_CHANCE:
         return EnemyKind.OGRE
+    if roll < vampire_chance + GHOST_CHANCE + OGRE_CHANCE + WIZZARD_CHANCE:
+        return EnemyKind.WIZZARD
+    
     return EnemyKind.ZOMBIE

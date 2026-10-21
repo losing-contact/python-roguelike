@@ -37,7 +37,7 @@ ENEMIES_START = 3                 # врагов на 1 уровне
 ENEMIES_STEP = 1                  # прирост врагов за уровень
 USEFUL_START = 8                  # полезных предметов на 1 уровне
 USEFUL_END = 3                    # ... и на последнем (между ними плавно убывает)
-VAMPIRE_CHANCE_START = 0.1
+VAMPIRE_CHANCE_START = 0.05
 VAMPIRE_CHANCE_STEP = 0.05
 VAMPIRE_CHANCE_MAX = 0.6
 
@@ -46,5 +46,10 @@ GHOST_VISIBLE_TURNS = (3, 6)      # сколько ходов видно
 GHOST_INVISIBLE_TURNS = (4, 8)    # сколько ходов невидимо
 
 
-OGRE_CHANCE = 0.9
+OGRE_CHANCE = 0.15
+
+WIZZARD_CHANCE = 0.2
+
+SLEEP_CHANCE = 1              # шанс усыпить игрока успешной атакой змея-мага
+
 

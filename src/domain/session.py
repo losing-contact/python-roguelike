@@ -265,3 +265,10 @@ class GameSession:
                                        result.drained_max_health))
         events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
                                        result.drained_max_health, result.slept))
+
+
+
+
+
+
+        #тест

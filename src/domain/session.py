@@ -24,6 +24,8 @@ from domain.models.stats import RunStats
 from domain.models.tile import Tile
 from domain.models.exploration import Exploration
 from domain.visibility import compute_visible
+from domain.enemies.behaviors import PATTERNS, diagonal_step_toward
+from domain.enemies.types import Trait
 
 LevelGenerator = Callable[[int, random.Random, int], Level]
 
@@ -69,6 +71,10 @@ class GameSession:
             return []
         events: list[ev.Event] = []
         match command:
+            case _ if self.player.asleep > 0:      # игрок спит: команда не выполняется, ход проходит
+                self.player.asleep -= 1
+                events.append(ev.PlayerSlept())
+                spent = True
             case Move(dx=dx, dy=dy):
                 spent = self._move_player(dx, dy, events)
             case UseItem(item_type=item_type, slot=slot):
@@ -216,12 +222,15 @@ class GameSession:
         enemy.timer = 0
 
         player_pos = self.player.pos
-        if enemy.pos.manhattan(player_pos) == 1:
+
+        room = self.level.room_at(enemy.pos)   
+        diagonal = (Trait.DIAGONAL_MOVE in enemy.traits 
+                    and room is not None and room == self.level.room_at(player_pos))
+        gap = max(abs(enemy.pos.x - player_pos.x), abs(enemy.pos.y - player_pos.y))
+        if enemy.pos.manhattan(player_pos) == 1 or (diagonal and gap == 1):
             self._enemy_attack(enemy, events)
             return
 
-        # погоня: кратчайший путь по проходимым клеткам, если игрок в зоне враждебности.
-        # Путь не бывает короче манхэттенского расстояния, поэтому далёких врагов не ищем.
         if enemy.pos.manhattan(player_pos) <= enemy.hostility:
             occupied = {e.pos for e in self.level.enemies if e is not enemy}
             level = self.level
@@ -232,18 +241,27 @@ class GameSession:
                     and p not in occupied
                 )
 
+            if diagonal: 
+                dstep = diagonal_step_toward(enemy.pos, player_pos, passable, self.rng)
+                if dstep is not None:
+                    enemy.pos = dstep
+                    return
+
             path = bfs_path(enemy.pos, player_pos, passable, max_dist=enemy.hostility)
             if path:
                 steps = max(1, min(enemy.spec.step_size, len(path) - 1))
                 enemy.pos = path[steps - 1]
                 return
 
-        # игрока нет рядом (или к нему нет пути): ходим по своему паттерну
         step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
         if step is not None and step != player_pos:
             enemy.pos = step
+
+
 
     def _enemy_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
         result = combat.resolve_attack(enemy, self.player, self.rng)
         events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
                                        result.drained_max_health))
+        events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
+                                       result.drained_max_health, result.slept))

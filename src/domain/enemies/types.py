@@ -12,6 +12,7 @@ class EnemyKind(Enum):
     VAMPIRE = "vampire"
     GHOST = "ghost"
     OGRE = "ogre"
+    WIZZARD = "wizzard"
     
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
@@ -23,6 +24,10 @@ class Trait(Enum):
     DRAIN_MAX_HEALTH = "drain_max_health"  # успешная атака отнимает максимальное здоровье
     INVISIBLE_PHASES = "invisible_phases"  # периодически невидим, пока игрок не вступил в бой
     REST_AFTER_ATTACK = "rest_after_attack"  # после атаки отдыхает ход, следующий удар гарантированно попадает
+    SLEEP_ON_HIT = "sleep_on_hit"  # успешная атака может усыпить игрока на один ход
+    DIAGONAL_MOVE = "diagonal_move"  # в комнате с игроком ходит и бьёт по диагонали
+
+
 @dataclass(frozen=True)
 class EnemySpec:
     kind: EnemyKind
@@ -58,5 +63,11 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         max_health=10 * SCALE, agility=2, strength=3 * SCALE,
         hostility=5, move_every=3, step_size=2,
         traits=frozenset({Trait.REST_AFTER_ATTACK}),
+    ),
+        EnemyKind.WIZZARD: EnemySpec(
+        EnemyKind.WIZZARD, "Маг",
+        max_health=5 * SCALE, agility=3, strength=1 * SCALE,
+        hostility=6, move_every=2,
+        traits=frozenset({Trait.SLEEP_ON_HIT, Trait.DIAGONAL_MOVE}),
     ),
 }

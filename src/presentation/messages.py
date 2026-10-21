@@ -41,9 +41,10 @@ def format_event(event: ev.Event) -> str | None:
             return f"Вы ударили: {SPECS[kind].name} (-{damage})"
         case ev.PlayerAttacked(target=kind):
             return f"Вы промахнулись по: {SPECS[kind].name}"
-        case ev.EnemyAttacked(attacker=kind, hit=True, damage=damage, drained_max_health=drained):
+        case ev.EnemyAttacked(attacker=kind, hit=True, damage=damage, drained_max_health=drained, slept=slept):
             drain = f", макс. здоровье -{drained}" if drained else ""
-            return f"{SPECS[kind].name} бьёт вас (-{damage}{drain})"
+            sleep = ", вы уснули" if slept else ""
+            return f"{SPECS[kind].name} бьёт вас (-{damage}{drain}{sleep})"
         case ev.EnemyAttacked(attacker=kind):
             return f"{SPECS[kind].name} промахнулся"
         case ev.EnemyKilled(kind=kind, treasure=treasure):
@@ -64,6 +65,8 @@ def format_event(event: ev.Event) -> str | None:
             return "Действие эликсира закончилось"
         case ev.LevelChanged(level=level):
             return f"Вы спустились на уровень {level}"
+        case ev.PlayerSlept():
+            return "Вы спите и пропускаете ход"
         case ev.PlayerDied():
             return "Вы погибли"
         case ev.GameWon():

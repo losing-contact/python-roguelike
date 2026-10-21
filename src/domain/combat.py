@@ -8,6 +8,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
+
 from domain.balance import (
     HIT_BASE,
     HIT_MAX,
@@ -16,6 +17,7 @@ from domain.balance import (
     MIN_MAX_HEALTH,
     SCALE,
     VAMPIRE_DRAIN,
+    SLEEP_CHANCE,
 )
 from domain.enemies.types import Trait
 from domain.models.entities import Entity
@@ -26,7 +28,7 @@ class AttackResult:
     hit: bool
     damage: int = 0
     drained_max_health: int = 0
-
+    slept: bool = False
 
 def hit_chance(attacker: Entity, target: Entity) -> float:
     chance = HIT_BASE + HIT_PER_AGILITY * (attacker.agility - target.agility)
@@ -62,7 +64,11 @@ def resolve_attack(attacker: Entity, target: Entity, rng: random.Random) -> Atta
         drained = min(VAMPIRE_DRAIN, max(0, target.max_health - MIN_MAX_HEALTH))
         target.max_health -= drained
         target.health = min(target.health, target.max_health)
-    return AttackResult(hit=True, damage=damage, drained_max_health=drained)
+    slept = False
+    if Trait.SLEEP_ON_HIT in attacker.traits and target.alive and rng.random() < SLEEP_CHANCE:
+        target.asleep = 1                      # игрок пропустит следующий ход
+        slept = True
+    return AttackResult(hit=True, damage=damage, drained_max_health=drained, slept=slept)
 
 
 def treasure_value(enemy: Entity, hostility: int, rng: random.Random) -> int:

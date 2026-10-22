@@ -114,6 +114,11 @@ class GameSession:
         return True
 
     def _player_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
+
+        if enemy.disguised:                         # игрок наступил на «предмет»
+            enemy.disguised = False
+            events.append(ev.MimicRevealed())
+
         result = combat.resolve_attack(self.player, enemy, self.rng)
         events.append(ev.PlayerAttacked(enemy.kind, result.hit, result.damage))
         if not enemy.alive:
@@ -211,6 +216,13 @@ class GameSession:
 
 
     def _enemy_turn(self, enemy: Enemy, events: list[ev.Event]) -> None:
+
+        if enemy.disguised:
+            if enemy.pos.manhattan(self.player.pos) > 1:
+                return                              # лежит как предмет, не двигается
+            enemy.disguised = False                 # игрок вплотную: маска спадает, мимик бьёт
+            events.append(ev.MimicRevealed())
+
         if enemy.resting:                 # огр отдыхает: ход пропущен
             enemy.resting = False
             enemy.counter_ready = True

@@ -13,7 +13,8 @@ class EnemyKind(Enum):
     GHOST = "ghost"
     OGRE = "ogre"
     WIZZARD = "wizzard"
-    
+    MIMIC = "mimic"
+
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
 
@@ -26,6 +27,7 @@ class Trait(Enum):
     REST_AFTER_ATTACK = "rest_after_attack"  # после атаки отдыхает ход, следующий удар гарантированно попадает
     SLEEP_ON_HIT = "sleep_on_hit"  # успешная атака может усыпить игрока на один ход
     DIAGONAL_MOVE = "diagonal_move"  # в комнате с игроком ходит и бьёт по диагонали
+    MIMIC = "mimic"  # выглядит как предмет, пока игрок не подошёл или не ударил
 
 
 @dataclass(frozen=True)
@@ -70,4 +72,12 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         hostility=6, move_every=2,
         traits=frozenset({Trait.SLEEP_ON_HIT, Trait.DIAGONAL_MOVE}),
     ),
+
+        EnemyKind.MIMIC: EnemySpec(
+        EnemyKind.MIMIC, "Мимик",
+        max_health=10 * SCALE, agility=8, strength=1 * SCALE,
+        hostility=2, move_every=2,
+        traits=frozenset({Trait.MIMIC}),
+    ),
+
 }

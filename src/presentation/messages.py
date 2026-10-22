@@ -71,4 +71,6 @@ def format_event(event: ev.Event) -> str | None:
             return "Вы погибли"
         case ev.GameWon():
             return "Вы прошли все уровни!"
+        case ev.MimicRevealed():
+            return "Это был мимик!"
     return None

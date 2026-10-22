@@ -31,6 +31,8 @@ from presentation.theme import (
 
 from presentation.menu_items import ITEMS
 
+from domain.enemies import mimicry
+
 from domain.models.position import Pos
 
 HELP = "WASD ход · h оружие · j еда · k эликсир · e свиток · q выход"
@@ -135,6 +137,8 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
     for enemy in session.level.enemies:
         if enemy.pos in session.visible and not enemy.invisible:
             glyph = ENEMY_GLYPHS.get(enemy.kind)
+            if enemy.disguised:                              # мимик выглядит как предмет
+                glyph = ITEM_GLYPHS.get(mimicry.disguise_of(enemy))
             if glyph:
                 put_map(screen, enemy.pos, glyph)
 

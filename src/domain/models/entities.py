@@ -135,3 +135,4 @@ class Enemy(Entity):
     phase_turns: int = 3
     resting: bool = False
     counter_ready: bool = False
+    disguised: bool = False 

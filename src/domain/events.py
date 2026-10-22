@@ -88,9 +88,13 @@ class PlayerDied:
 class GameWon:
     pass
 
+@dataclass(frozen=True)
+class MimicRevealed:
+    pass
+
 
 Event = (
     Moved | PlayerAttacked | EnemyAttacked | EnemyKilled | ItemPickedUp | BackpackFull
     | ItemUsed | WeaponEquipped | WeaponUnequipped | WeaponDropped | EffectExpired
-    | LevelChanged | PlayerDied | GameWon | PlayerSlept
+    | LevelChanged | PlayerDied | GameWon | PlayerSlept | MimicRevealed
 )

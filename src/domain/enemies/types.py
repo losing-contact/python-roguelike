@@ -11,7 +11,10 @@ class EnemyKind(Enum):
     ZOMBIE = "zombie"
     VAMPIRE = "vampire"
     GHOST = "ghost"
-    
+    OGRE = "ogre"
+    WIZZARD = "wizzard"
+    MIMIC = "mimic"
+
     # TODO (Задание 2): GHOST, OGRE, SNAKE_MAGE; (Задание 8): MIMIC
 
 
@@ -21,6 +24,11 @@ class Trait(Enum):
     FIRST_HIT_MISS = "first_hit_miss"      # первый удар по такому врагу - всегда промах
     DRAIN_MAX_HEALTH = "drain_max_health"  # успешная атака отнимает максимальное здоровье
     INVISIBLE_PHASES = "invisible_phases"  # периодически невидим, пока игрок не вступил в бой
+    REST_AFTER_ATTACK = "rest_after_attack"  # после атаки отдыхает ход, следующий удар гарантированно попадает
+    SLEEP_ON_HIT = "sleep_on_hit"  # успешная атака может усыпить игрока на один ход
+    DIAGONAL_MOVE = "diagonal_move"  # в комнате с игроком ходит и бьёт по диагонали
+    MIMIC = "mimic"  # выглядит как предмет, пока игрок не подошёл или не ударил
+
 
 @dataclass(frozen=True)
 class EnemySpec:
@@ -32,7 +40,7 @@ class EnemySpec:
     hostility: int             # с какого расстояния (по пути) начинается преследование
     move_every: int = 1        # враг действует раз в N ходов игрока
     traits: frozenset[Trait] = frozenset()
-
+    step_size: int = 1         # сколько клеток проходит за один ход
 
 SPECS: dict[EnemyKind, EnemySpec] = {
     EnemyKind.ZOMBIE: EnemySpec(
@@ -52,4 +60,24 @@ SPECS: dict[EnemyKind, EnemySpec] = {
         hostility=3, move_every=2,
         traits=frozenset({Trait.INVISIBLE_PHASES}),
     ),
+        EnemyKind.OGRE: EnemySpec(
+        EnemyKind.OGRE, "Огр",
+        max_health=10 * SCALE, agility=2, strength=3 * SCALE,
+        hostility=5, move_every=3, step_size=2,
+        traits=frozenset({Trait.REST_AFTER_ATTACK}),
+    ),
+        EnemyKind.WIZZARD: EnemySpec(
+        EnemyKind.WIZZARD, "Маг",
+        max_health=5 * SCALE, agility=3, strength=1 * SCALE,
+        hostility=6, move_every=2,
+        traits=frozenset({Trait.SLEEP_ON_HIT, Trait.DIAGONAL_MOVE}),
+    ),
+
+        EnemyKind.MIMIC: EnemySpec(
+        EnemyKind.MIMIC, "Мимик",
+        max_health=10 * SCALE, agility=8, strength=1 * SCALE,
+        hostility=2, move_every=2,
+        traits=frozenset({Trait.MIMIC}),
+    ),
+
 }

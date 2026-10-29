@@ -62,6 +62,7 @@ class Character(Entity):
         self.pos = pos or Pos(0, 0)
         self.max_health = PLAYER_MAX_HEALTH
         self.health = self.max_health
+        self.asleep = 0          # ходов, которые игрок пропустит
         self.agility = PLAYER_AGILITY
         self.strength = PLAYER_STRENGTH
         self.weapon: Item | None = None
@@ -134,3 +135,6 @@ class Enemy(Entity):
 
     invisible: bool = False
     phase_turns: int = 3
+    resting: bool = False
+    counter_ready: bool = False
+    disguised: bool = False 

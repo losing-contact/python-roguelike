@@ -1,10 +1,8 @@
-"""Игровая сессия: единственная точка входа в игру для остальных слоёв.
+# Игровая сессия: единственная точка входа в игру для остальных слоёв.
 
-Снаружи видно две вещи: `session.handle(команда) -> [события]` и состояние
-(`player`, `level`, `stats`, `state`) для отрисовки.
-"""
 from __future__ import annotations
 
+# тут мы импортируем все что только надо 
 import random
 from collections.abc import Callable
 from enum import Enum
@@ -14,7 +12,8 @@ from domain import events as ev
 from domain.balance import LEVELS
 from domain.commands import Command, Move, UseItem
 from domain.enemies import invisibility
-from domain.enemies.behaviors import PATTERNS
+from domain.enemies.behaviors import PATTERNS, diagonal_step_toward
+from domain.enemies.types import Trait
 from domain.generation.level_factory import generate_level
 from domain.geometry import bfs_path
 from domain.models.entities import Character, Enemy
@@ -63,13 +62,17 @@ class GameSession:
 
     # ------------------------------------------------------------------
     # Публичный интерфейс
-    # ------------------------------------------------------------------
+  
     def handle(self, command: Command) -> list[ev.Event]:
         """Выполняет команду игрока и ход мира. Возвращает произошедшие события."""
         if self.state is not GameState.PLAYING:
             return []
         events: list[ev.Event] = []
         match command:
+            case _ if self.player.asleep > 0:  # во сне команда тратит ход
+                self.player.asleep -= 1
+                events.append(ev.PlayerSlept())
+                spent = True
             case Move(dx=dx, dy=dy):
                 spent = self._move_player(dx, dy, events)
             case UseItem(item_type=item_type, slot=slot):
@@ -116,6 +119,11 @@ class GameSession:
         return True
 
     def _player_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
+
+        if enemy.disguised:                         # игрок наступил на «предмет»
+            enemy.disguised = False
+            events.append(ev.MimicRevealed())
+
         result = combat.resolve_attack(self.player, enemy, self.rng)
         events.append(ev.PlayerAttacked(enemy.kind, result.hit, result.damage))
         if not enemy.alive:
@@ -216,19 +224,35 @@ class GameSession:
                 events.append(ev.PlayerDied())
                 return
 
+
     def _enemy_turn(self, enemy: Enemy, events: list[ev.Event]) -> None:
+
+        if enemy.disguised:
+            if enemy.pos.manhattan(self.player.pos) > 1:
+                return                              # лежит как предмет, не двигается
+            enemy.disguised = False                 # игрок вплотную: маска спадает, мимик бьёт
+            events.append(ev.MimicRevealed())
+
+        if enemy.resting:                 # огр отдыхает: ход пропущен
+            enemy.resting = False
+            enemy.counter_ready = True
+            return
+
         enemy.timer += 1
         if enemy.timer < enemy.spec.move_every:
             return
         enemy.timer = 0
 
         player_pos = self.player.pos
-        if enemy.pos.manhattan(player_pos) == 1:
+
+        room = self.level.room_at(enemy.pos)   
+        diagonal = (Trait.DIAGONAL_MOVE in enemy.traits 
+                    and room is not None and room == self.level.room_at(player_pos))
+        gap = max(abs(enemy.pos.x - player_pos.x), abs(enemy.pos.y - player_pos.y))
+        if enemy.pos.manhattan(player_pos) == 1 or (diagonal and gap == 1):
             self._enemy_attack(enemy, events)
             return
 
-        # погоня: кратчайший путь по проходимым клеткам, если игрок в зоне враждебности.
-        # Путь не бывает короче манхэттенского расстояния, поэтому далёких врагов не ищем.
         if enemy.pos.manhattan(player_pos) <= enemy.hostility:
             occupied = {e.pos for e in self.level.enemies if e is not enemy}
             level = self.level
@@ -239,16 +263,27 @@ class GameSession:
                     and p not in occupied
                 )
 
+            if diagonal: 
+                dstep = diagonal_step_toward(enemy.pos, player_pos, passable, self.rng)
+                if dstep is not None:
+                    enemy.pos = dstep
+                    return
+
             path = bfs_path(enemy.pos, player_pos, passable, max_dist=enemy.hostility)
             if path:
-                enemy.pos = path[0]
+                steps = max(1, min(enemy.spec.step_size, len(path) - 1))
+                enemy.pos = path[steps - 1]
                 return
 
-            step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
-            if step is not None and step != player_pos:
-                enemy.pos = step
+        step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
+        if step is not None and step != player_pos:
+            enemy.pos = step
+
+
 
     def _enemy_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
         result = combat.resolve_attack(enemy, self.player, self.rng)
         events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
                                        result.drained_max_health))
+        events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
+                                       result.drained_max_health, result.slept))

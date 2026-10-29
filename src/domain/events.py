@@ -26,6 +26,12 @@ class EnemyAttacked:
     hit: bool
     damage: int
     drained_max_health: int = 0
+    slept: bool = False
+
+
+@dataclass(frozen=True)
+class PlayerSlept:
+    pass
 
 
 @dataclass(frozen=True)
@@ -83,6 +89,10 @@ class PlayerDied:
 class GameWon:
     pass
 
+@dataclass(frozen=True)
+class MimicRevealed:
+    pass
+
 
 @dataclass(frozen=True)
 class KeyPickedUp:
@@ -103,4 +113,5 @@ Event = (
     Moved | PlayerAttacked | EnemyAttacked | EnemyKilled | ItemPickedUp | BackpackFull
     | ItemUsed | WeaponEquipped | WeaponUnequipped | WeaponDropped | EffectExpired
     | LevelChanged | PlayerDied | GameWon | KeyPickedUp | DoorOpened | DoorLocked
+    | PlayerSlept | MimicRevealed
 )

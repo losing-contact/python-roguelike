@@ -8,10 +8,14 @@ from domain.balance import (
     VAMPIRE_CHANCE_START,
     VAMPIRE_CHANCE_STEP,
     GHOST_CHANCE,
+    OGRE_CHANCE,
+    WIZZARD_CHANCE,
+    MIMIC_CHANCE
 )
 from domain.enemies.types import SPECS, EnemyKind
 from domain.models.entities import Enemy
 from domain.models.position import Pos
+from domain.enemies.types import SPECS, EnemyKind, Trait
 
 
 def create_enemy(kind: EnemyKind, pos: Pos, level: int) -> Enemy:
@@ -26,6 +30,7 @@ def create_enemy(kind: EnemyKind, pos: Pos, level: int) -> Enemy:
         max_health=max_health,
         agility=spec.agility + (level - 1) // 3,
         strength=round(spec.strength * k),
+        disguised=Trait.MIMIC in spec.traits,     # мимик лежит под видом предмета
     )
 
 
@@ -39,4 +44,11 @@ def pick_enemy_kind(level: int, rng: random.Random) -> EnemyKind:
         return EnemyKind.VAMPIRE
     if roll < vampire_chance + GHOST_CHANCE:
         return EnemyKind.GHOST
+    if roll < vampire_chance + GHOST_CHANCE + OGRE_CHANCE:
+        return EnemyKind.OGRE
+    if roll < vampire_chance + GHOST_CHANCE + OGRE_CHANCE + WIZZARD_CHANCE:
+        return EnemyKind.WIZZARD
+    if roll < vampire_chance + GHOST_CHANCE + OGRE_CHANCE + WIZZARD_CHANCE + MIMIC_CHANCE:      # допишите шансы всех врагов, что уже есть выше
+        return EnemyKind.MIMIC
+    
     return EnemyKind.ZOMBIE

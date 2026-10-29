@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from domain.models.entities import Enemy
 from domain.models.items import Item
+from domain.models.keys import KeyColor
 from domain.models.position import Pos
 from domain.models.tile import WALKABLE, Tile
 
@@ -63,6 +64,9 @@ class Level:
     enemies: list[Enemy] = field(default_factory=list)
     items: dict[Pos, Item] = field(default_factory=dict)
 
+    doors: dict[Pos, KeyColor] = field(default_factory=dict)
+    keys: dict[Pos, KeyColor] = field(default_factory=dict)
+
     # --- карта ---------------------------------------------------------
     def in_bounds(self, pos: Pos) -> bool:
         return 0 <= pos.x < self.width and 0 <= pos.y < self.height
@@ -73,7 +77,7 @@ class Level:
         return self.tiles[pos.y][pos.x]
 
     def is_walkable(self, pos: Pos) -> bool:
-        return self.tile_at(pos) in WALKABLE
+        return self.tile_at(pos) in WALKABLE and pos not in self.doors
 
     def room_at(self, pos: Pos) -> Room | None:
         for room in self.rooms:

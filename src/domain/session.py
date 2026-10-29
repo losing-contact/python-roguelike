@@ -13,17 +13,17 @@ from domain import combat
 from domain import events as ev
 from domain.balance import LEVELS
 from domain.commands import Command, Move, UseItem
-from domain.enemies.behaviors import PATTERNS
 from domain.enemies import invisibility
+from domain.enemies.behaviors import PATTERNS
 from domain.generation.level_factory import generate_level
 from domain.geometry import bfs_path
 from domain.models.entities import Character, Enemy
+from domain.models.exploration import Exploration
 from domain.models.items import Item, ItemType
 from domain.models.level import Level
 from domain.models.position import Pos
 from domain.models.stats import RunStats
 from domain.models.tile import Tile
-from domain.models.exploration import Exploration
 from domain.visibility import compute_visible
 
 LevelGenerator = Callable[[int, random.Random, int], Level]
@@ -97,6 +97,13 @@ class GameSession:
         if enemy is not None:
             self._player_attack(enemy, events)
             return True
+        door = self.level.doors.get(target)
+        if door is not None:
+            if door not in self.player.keys:
+                events.append(ev.DoorLocked(door))
+                return False
+            del self.level.doors[target]
+            events.append(ev.DoorOpened(door))
         if not self.level.is_walkable(target):
             return False  # упёрся в стену: ход не тратится
 
@@ -118,6 +125,10 @@ class GameSession:
             events.append(ev.EnemyKilled(enemy.kind, value))
 
     def _pick_up(self, pos: Pos, events: list[ev.Event]) -> None:
+        key = self.level.keys.pop(pos, None)
+        if key is not None:
+            self.player.keys.add(key)
+            events.append(ev.KeyPickedUp(key))
         item = self.level.items.get(pos)
         if item is None:
             return
@@ -136,6 +147,7 @@ class GameSession:
         self.level = self._generate(number, self.rng, self.total_levels)
         self.player.pos = self.level.start
         self.exploration = Exploration()
+        self.player.keys.clear()
         events.append(ev.LevelChanged(number))
 
     def _use_item(self, item_type: ItemType, slot: int | None, events: list[ev.Event]) -> bool:

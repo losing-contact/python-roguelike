@@ -17,21 +17,22 @@ from __future__ import annotations
 
 import curses
 
+from domain.models.position import Pos
 from domain.session import GameSession
 from presentation.colors import Color, attr
+from presentation.menu_items import ITEMS
 from presentation.messages import item_label
 from presentation.theme import (
+    DOOR_CHAR,
     ENEMY_GLYPHS,
     ITEM_GLYPHS,
+    KEY_CHAR,
+    KEY_COLORS,
     PLAYER_GLYPH_CHAR,
+    REMEMBERED_TILES,
     TILE_GLYPHS,
     Glyph,
-    REMEMBERED_TILES,
 )
-
-from presentation.menu_items import ITEMS
-
-from domain.models.position import Pos
 
 HELP = "WASD ход · h оружие · j еда · k эликсир · e свиток · q выход"
 
@@ -124,6 +125,14 @@ def draw(screen, session: GameSession, messages: list[str]) -> None:
                 glyph = TILE_GLYPHS.get(tile) if tile in REMEMBERED_TILES else None
                 if glyph:
                     put_map(screen, pos, glyph, dim=True)
+    for pos, color in session.level.doors.items():
+        if pos in session.exploration.seen:
+            put_map(screen, pos, Glyph(DOOR_CHAR, KEY_COLORS[color], curses.A_BOLD),
+                    dim=pos not in session.visible)
+    for pos, color in session.level.keys.items():
+        if pos in session.visible:
+            put_map(screen, pos, Glyph(KEY_CHAR, KEY_COLORS[color], curses.A_BOLD))
+
     # 3. Отрисовка предметов
     for pos, item in session.level.items.items():
         if pos in session.visible:
@@ -180,6 +189,10 @@ def draw_hud(screen, session: GameSession, messages: list[str], h: int, w: int) 
     hp_style = attr(hp_color, curses.A_BOLD)
     gold = attr(Color.YELLOW, curses.A_BOLD)
     weapon = item_label(p.weapon) if p.weapon else "кулаки"
+    keys = [(KEY_CHAR + " ", attr(KEY_COLORS[c], curses.A_BOLD))
+            for c in sorted(p.keys, key=lambda c: c.value)]
+    if keys:
+        keys.insert(0, ("   КЛЮЧИ ", label))
     put_segments(screen, h + 2, x, [
         ("HP ", label), ("[", label),
         ("█" * p.health_blocks, hp_style),
@@ -188,6 +201,7 @@ def draw_hud(screen, session: GameSession, messages: list[str], h: int, w: int) 
         ("   СИЛА ", label), (str(p.strength), attr(Color.RED, curses.A_BOLD)), (" |", label),
         ("   ЛОВК ", label), (str(p.agility), attr(Color.CYAN, curses.A_BOLD)), (" |", label),
         ("   * ", gold), (str(p.backpack.treasure), gold), (" |", label),
+    ] + keys + [
         ("   ОРУЖИЕ ", label), (weapon, normal),   # длинное название обрежется, а не сломает рамку
     ], limit)
 

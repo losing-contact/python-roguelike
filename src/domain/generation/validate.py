@@ -3,13 +3,15 @@ from __future__ import annotations
 
 from domain.balance import GRID_COLS, GRID_ROWS
 from domain.generation.layout import SECTION_H, SECTION_W
+from domain.generation.locks import lock_problems
 from domain.geometry import bfs_distances
 from domain.models.level import Level
-from domain.models.tile import Tile
+from domain.models.tile import WALKABLE, Tile
 
 
 def reachable_from_start(level: Level) -> dict:
-    return bfs_distances(level.start, level.is_walkable)
+    """Связность карты при открытых дверях; ключи проверяет lock_problems."""
+    return bfs_distances(level.start, lambda pos: level.tile_at(pos) in WALKABLE)
 
 
 def find_problems(level: Level) -> list[str]:
@@ -61,4 +63,5 @@ def find_problems(level: Level) -> list[str]:
             problems.append(f"предмет и враг на клетке {pos}")
         if level.tile_at(pos) is not Tile.FLOOR:
             problems.append(f"предмет вне пола комнаты: {pos}")
+    problems += lock_problems(level)
     return problems

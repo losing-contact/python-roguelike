@@ -5,7 +5,8 @@ import pytest
 
 from domain.balance import BACKPACK_SLOT_LIMIT
 from domain.commands import Move, UseItem
-from domain.geometry import bfs_path
+from domain.generation.locks import can_pass
+from domain.geometry import bfs_distances, bfs_path
 from domain.models.items import ItemType
 from domain.models.tile import Tile
 from domain.session import GameSession, GameState
@@ -28,6 +29,7 @@ def check_invariants(session: GameSession) -> None:
 
 
 def bot_step(session: GameSession) -> None:
+    """Один ход бота: лечится, берёт оружие, собирает достижимые ключи, потом идёт к выходу."""
     player, level = session.player, session.level
     if player.health * 2 < player.max_health and player.backpack.items_of(ItemType.FOOD):
         session.handle(UseItem(ItemType.FOOD, 0))
@@ -35,7 +37,16 @@ def bot_step(session: GameSession) -> None:
     if player.weapon is None and player.backpack.items_of(ItemType.WEAPON):
         session.handle(UseItem(ItemType.WEAPON, 0))
         return
-    path = bfs_path(player.pos, level.exit, level.is_walkable)
+
+    passable = can_pass(level, player.keys)
+    target = level.exit
+    if level.keys:   # на уровне ещё лежат ключи: идём к ближайшему из тех, до которых можно дойти
+        reach = bfs_distances(player.pos, passable)
+        keys_in_reach = [pos for pos in level.keys if pos in reach]
+        if keys_in_reach:
+            target = min(keys_in_reach, key=lambda pos: reach[pos])
+    path = bfs_path(player.pos, target, passable)
+    assert path, f"бот не нашёл пути к {target}: уровень {level.number} непроходим"
     nxt = path[0]
     session.handle(Move(nxt.x - player.pos.x, nxt.y - player.pos.y))
 

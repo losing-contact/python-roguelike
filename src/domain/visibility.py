@@ -42,6 +42,6 @@ def cast_rays(level: Level, origin: Pos, radius: int) -> set[Pos]:
                 if not level.in_bounds(cell):
                     break
                 visible.add(cell)
-                if level.tile_at(cell) in OPAQUE and cell != origin:
+                if (level.tile_at(cell) in OPAQUE or cell in level.doors) and cell != origin:
                     break  # стену видим, а то, что за ней - нет
     return visible

@@ -8,6 +8,7 @@ from domain.enemies.types import SPECS, EnemyKind
 from domain.models.entities import ActiveEffect, Character, Enemy
 from domain.models.exploration import Exploration
 from domain.models.items import Backpack, Item, ItemType, Stat
+from domain.models.keys import KeyColor
 from domain.models.level import Corridor, Level, Room
 from domain.models.position import Pos
 from domain.models.stats import RunStats
@@ -71,6 +72,7 @@ def player_to_dict(player):
         "strength": player.strength,
         "weapon": item_to_dict(player.weapon) if player.weapon else None,
         "backpack": backpack_to_dict(player.backpack),
+        "keys": sorted(color.value for color in player.keys),
         "effects": [
             {"stat": e.stat.value, "amount": e.amount, "turns_left": e.turns_left}
             for e in player.effects
@@ -80,6 +82,7 @@ def player_to_dict(player):
 
 def player_from_dict(data):
     player = Character(pos_from_list(data["pos"]))
+    player.keys = {KeyColor(value) for value in data.get("keys", [])}
     player.health = data["health"]
     player.max_health = data["max_health"]
     player.agility = data["agility"]
@@ -152,6 +155,10 @@ def level_to_dict(level):
         "start_room": level.start_room,
         "exit_room": level.exit_room,
         "enemies": [enemy_to_dict(e) for e in level.enemies],
+        "doors": [{"pos": pos_to_list(pos), "color": color.value}
+                  for pos, color in level.doors.items()],
+        "keys": [{"pos": pos_to_list(pos), "color": color.value}
+                 for pos, color in level.keys.items()],
         # ключом в json может быть только строка, поэтому предметы на полу - список пар
         "items": [{"pos": pos_to_list(pos), "item": item_to_dict(item)}
                   for pos, item in level.items.items()],
@@ -171,6 +178,8 @@ def level_from_dict(data):
         start_room=data["start_room"],
         exit_room=data["exit_room"],
         enemies=[enemy_from_dict(e) for e in data["enemies"]],
+        doors={pos_from_list(e["pos"]): KeyColor(e["color"]) for e in data.get("doors", [])},
+        keys={pos_from_list(e["pos"]): KeyColor(e["color"]) for e in data.get("keys", [])},
         items={pos_from_list(e["pos"]): item_from_dict(e["item"]) for e in data["items"]},
     )
 

@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 from domain.balance import LEVEL_H, LEVEL_W, LEVELS
 from domain.generation.layout import build_corridor, build_rooms, choose_connections, paint
+from domain.generation.locks import lock_count, place_locks
 from domain.generation.populate import populate
 from domain.generation.validate import find_problems
 from domain.geometry import bfs_distances
@@ -50,6 +51,7 @@ def generate_level(number: int, rng: random.Random, total: int = LEVELS) -> Leve
             start_room=start_room.id, exit_room=exit_room.id,
         )
         populate(level, rng, total)
+        place_locks(level, rng, lock_count(number))
         if not find_problems(level):
             return level
     raise RuntimeError(f"не удалось сгенерировать уровень {number} за {MAX_ATTEMPTS} попыток")

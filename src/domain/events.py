@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from domain.enemies.types import EnemyKind
 from domain.models.items import Item
+from domain.models.keys import KeyColor
 
 
 @dataclass(frozen=True)
@@ -83,8 +84,23 @@ class GameWon:
     pass
 
 
+@dataclass(frozen=True)
+class KeyPickedUp:
+    color: KeyColor
+
+
+@dataclass(frozen=True)
+class DoorOpened:
+    color: KeyColor
+
+
+@dataclass(frozen=True)
+class DoorLocked:
+    color: KeyColor
+
+
 Event = (
     Moved | PlayerAttacked | EnemyAttacked | EnemyKilled | ItemPickedUp | BackpackFull
     | ItemUsed | WeaponEquipped | WeaponUnequipped | WeaponDropped | EffectExpired
-    | LevelChanged | PlayerDied | GameWon
+    | LevelChanged | PlayerDied | GameWon | KeyPickedUp | DoorOpened | DoorLocked
 )

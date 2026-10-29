@@ -4,6 +4,7 @@ from typing import NamedTuple
 
 from domain.enemies.types import EnemyKind
 from domain.models.items import ItemType
+from domain.models.keys import KeyColor
 from domain.models.tile import Tile
 from presentation.colors import Color
 
@@ -37,6 +38,10 @@ ITEM_GLYPHS: dict[ItemType, Glyph] = {
     ItemType.WEAPON: Glyph("༒︎", Color.WALL, curses.A_DIM),
     ItemType.TREASURE: Glyph("$", Color.YELLOW, curses.A_BOLD),
 }
+
+KEY_CHAR = "="
+DOOR_CHAR = "▒"
+KEY_COLORS = {KeyColor.RED: Color.RED, KeyColor.YELLOW: Color.YELLOW, KeyColor.BLUE: Color.BLUE}
 
 PLAYER_GLYPH_CHAR = "@"
 # Что остаётся нарисованным на уже невидимых, но увиденных ранее клетках.

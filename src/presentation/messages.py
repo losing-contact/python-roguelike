@@ -4,6 +4,9 @@ from __future__ import annotations
 from domain import events as ev
 from domain.enemies.types import SPECS
 from domain.models.items import Item, ItemType, Stat
+from domain.models.keys import KeyColor
+
+KEY_NAMES = {KeyColor.RED: "красный", KeyColor.YELLOW: "жёлтый", KeyColor.BLUE: "синий"}
 
 STAT_NAMES = {
     Stat.MAX_HEALTH: "макс. здоровью",
@@ -37,6 +40,12 @@ def item_label(item: Item) -> str:
 
 def format_event(event: ev.Event) -> str | None:
     match event:
+        case ev.KeyPickedUp(color=color):
+            return f"Вы нашли {KEY_NAMES[color]} ключ"
+        case ev.DoorOpened(color=color):
+            return f"Дверь открыта: {KEY_NAMES[color]} ключ подошёл"
+        case ev.DoorLocked(color=color):
+            return f"Дверь заперта: нужен {KEY_NAMES[color]} ключ"
         case ev.PlayerAttacked(target=kind, hit=True, damage=damage):
             return f"Вы ударили: {SPECS[kind].name} (-{damage})"
         case ev.PlayerAttacked(target=kind):

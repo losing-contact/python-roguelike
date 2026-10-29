@@ -12,6 +12,7 @@ from domain.balance import (
 )
 from domain.enemies.types import EnemyKind, EnemySpec, Trait
 from domain.models.items import Backpack, Item, Stat
+from domain.models.keys import KeyColor
 from domain.models.position import Pos
 
 
@@ -65,6 +66,7 @@ class Character(Entity):
         self.strength = PLAYER_STRENGTH
         self.weapon: Item | None = None
         self.backpack = Backpack()
+        self.keys: set[KeyColor] = set()
         self.effects: list[ActiveEffect] = []
 
     @property

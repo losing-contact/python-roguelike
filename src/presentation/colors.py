@@ -12,6 +12,7 @@ class Color(IntEnum):
     YELLOW = 4
     CYAN = 5
     MAGENTA = 6
+    BLUE = 7
 
 
 def init_colors() -> None:
@@ -30,6 +31,7 @@ def init_colors() -> None:
     curses.init_pair(Color.YELLOW, curses.COLOR_YELLOW, background)
     curses.init_pair(Color.CYAN, curses.COLOR_CYAN, background)
     curses.init_pair(Color.MAGENTA, curses.COLOR_MAGENTA, background)
+    curses.init_pair(Color.BLUE, curses.COLOR_BLUE, background)
 
 
 def attr(color: Color, extra: int = 0) -> int:

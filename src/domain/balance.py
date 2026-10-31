@@ -9,7 +9,7 @@ SCALE = 10  # 1 блок полоски здоровья = 10 единиц зд�
 # --- мир ---------------------------------------------------------------
 LEVELS_PER_LOCK = 3               # новая дверь на уровнях 2, 5, 8
 LEVELS = 21                       # всего уровней подземелья
-LEVEL_W, LEVEL_H = 78, 21         # карта влезает в терминал 80x24 (+3 строки интерфейса)
+LEVEL_W, LEVEL_H = 78, 21         # размер карты; рамку и HUD добавляет presentation
 GRID_COLS, GRID_ROWS = 3, 3       # уровень делится на 3x3 секции, в каждой одна комната
 ROOM_MIN_W, ROOM_MAX_W = 5, 20    # размеры пола комнаты (без стен)
 ROOM_MIN_H, ROOM_MAX_H = 3, 4
@@ -51,3 +51,6 @@ SLEEP_CHANCE = 0.1                # было 1
 
 GHOST_VISIBLE_TURNS = (3, 6)      # сколько ходов видно
 GHOST_INVISIBLE_TURNS = (4, 8)    # сколько ходов невидимо
+
+SECTION_W = LEVEL_W // GRID_COLS
+SECTION_H = LEVEL_H // GRID_ROWS

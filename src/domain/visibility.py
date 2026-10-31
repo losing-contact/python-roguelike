@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from domain.balance import VISION_RADIUS
 from domain.geometry import bresenham
-from domain.models.level import Level, Room
-from domain.models.position import Pos
-from domain.models.tile import Tile
+from domain.level import Level, Pos, Room, Tile
 
 OPAQUE = frozenset({Tile.WALL, Tile.VOID})  # стены и порода не пропускают взгляд
 
@@ -31,6 +29,10 @@ def room_in_sight(level: Level, room: Room) -> set[Pos]:
     return {cell for cell in room.footprint() if level.in_bounds(cell)}
 
 
+def blocks_sight(level: Level, pos: Pos) -> bool:
+    return level.tile_at(pos) in OPAQUE or pos in level.doors
+
+
 def cast_rays(level: Level, origin: Pos, radius: int) -> set[Pos]:
     """Ray casting: по лучу к каждой клетке круга радиуса radius, пока не упрёмся в стену."""
     visible = {origin}
@@ -38,10 +40,17 @@ def cast_rays(level: Level, origin: Pos, radius: int) -> set[Pos]:
         for dx in range(-radius, radius + 1):
             if dx * dx + dy * dy > radius * radius:
                 continue
+            previous = origin
             for cell in bresenham(origin, origin.shifted(dx, dy)):
                 if not level.in_bounds(cell):
                     break
+                if cell.x != previous.x and cell.y != previous.y:
+                    # Между двумя соприкасающимися преградами нет щели для взгляда.
+                    if (blocks_sight(level, Pos(cell.x, previous.y))
+                            and blocks_sight(level, Pos(previous.x, cell.y))):
+                        break
                 visible.add(cell)
-                if (level.tile_at(cell) in OPAQUE or cell in level.doors) and cell != origin:
-                    break  # стену видим, а то, что за ней - нет
+                if blocks_sight(level, cell) and cell != origin:
+                    break  # стену или дверь видим, а то, что за ними — нет
+                previous = cell
     return visible

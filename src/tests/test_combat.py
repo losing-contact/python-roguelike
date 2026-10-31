@@ -2,11 +2,9 @@ import random
 
 from domain import combat
 from domain.balance import HIT_MAX, HIT_MIN, MIN_MAX_HEALTH, SCALE, VAMPIRE_DRAIN
-from domain.enemies.factory import create_enemy
-from domain.enemies.types import EnemyKind
-from domain.models.entities import Character
-from domain.models.items import Item, ItemType
-from domain.models.position import Pos
+from domain.entities import Character, EnemyKind, create_enemy
+from domain.items import Item, ItemType
+from domain.level import Pos
 
 
 def zombie(level=1):

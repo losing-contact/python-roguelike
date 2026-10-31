@@ -1,5 +1,5 @@
 from domain.geometry import bfs_distances, bfs_path, bresenham
-from domain.models.position import Pos
+from domain.level import Pos
 
 OPEN = {Pos(x, y) for x in range(5) for y in range(5)}
 

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from domain.enemies.types import EnemyKind
-from domain.models.items import Item
-from domain.models.keys import KeyColor
+from domain.entities import EnemyKind
+from domain.items import Item
+from domain.level import KeyColor
 
 
 @dataclass(frozen=True)

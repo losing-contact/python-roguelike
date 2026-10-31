@@ -5,11 +5,11 @@ import pytest
 
 from domain.balance import BACKPACK_SLOT_LIMIT
 from domain.commands import Move, UseItem
-from domain.generation.locks import can_pass
 from domain.geometry import bfs_distances, bfs_path
-from domain.models.items import ItemType
-from domain.models.tile import Tile
+from domain.items import ItemType
+from domain.level import Tile
 from domain.session import GameSession, GameState
+from domain.validation import can_pass
 
 
 def check_invariants(session: GameSession) -> None:

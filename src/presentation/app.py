@@ -2,20 +2,19 @@
 from __future__ import annotations
 
 import curses
-from domain.ports import SaveRepository
 
 from domain import events as ev
 from domain.balance import LEVEL_H, LEVEL_W
+from domain.ports import SaveRepository
 from domain.session import GameSession, GameState
-from presentation import end_screen, menus
-from presentation.colors import init_colors
+from presentation import menus, screens
 from presentation.input import OpenMenu, Quit, read_key, translate
 from presentation.messages import format_event
-from presentation.renderer import draw, put
-from presentation import end_screen, main_menu, menus, records_screen
+from presentation.renderer import EXTRA_COLS, EXTRA_ROWS, draw, put
+from presentation.theme import init_colors
 
-MIN_ROWS = LEVEL_H + 3     # карта + статус + сообщения + подсказка
-MIN_COLS = LEVEL_W
+MIN_ROWS = LEVEL_H + EXTRA_ROWS
+MIN_COLS = LEVEL_W + EXTRA_COLS
 MESSAGE_LIMIT = 6
 
 
@@ -30,14 +29,13 @@ def run(screen, repo: SaveRepository, new_game) -> None:
 
     while True:
         saved = repo.load_session()
-        choice = main_menu.choose(screen, saved is not None)
-        log(f"choice={choice!r}")
+        choice = menus.choose_main(screen, saved is not None)
         if choice == "new":
             play(screen, new_game(), repo)
         elif choice == "continue":
             play(screen, saved, repo)
         elif choice == "records":
-            records_screen.show(screen, repo.top_records())
+            screens.show_records(screen, repo.top_records())
         else:
             return
 
@@ -46,7 +44,6 @@ def play(screen, session: GameSession, repo: SaveRepository) -> None:
     messages: list[str] = []
     while True:
         if not _wait_for_big_enough_terminal(screen):
-            log("break: окно мало")
             break
         draw(screen, session, messages)
 
@@ -54,21 +51,21 @@ def play(screen, session: GameSession, repo: SaveRepository) -> None:
         if request is None:
             continue
         if isinstance(request, Quit):
-            log("break: q")
             break
         if isinstance(request, OpenMenu):
             request = menus.choose_item(screen, session.player, request.item_type)
             if request is None:
                 continue
         for event in session.handle(request):
+            if isinstance(event, ev.LevelChanged):
+                repo.save_session(session)
             text = format_event(event)
             if text:
                 messages.append(text)
         messages = messages[-MESSAGE_LIMIT:]
         if session.state is not GameState.PLAYING:
-            log("break: игра закончилась")
             draw(screen, session, messages)
-            end_screen.show(screen, session.state, session.stats)
+            screens.show_end(screen, session.state, session.stats)
             break
 
     finish(session, repo)
@@ -95,8 +92,3 @@ def _wait_for_big_enough_terminal(screen) -> bool:
         key = read_key(screen)
         if isinstance(key, str) and key.lower() in ("q", "й"):
             return False
-
-
-def log(text):
-    with open("debug.log", "a", encoding="utf-8") as f:
-        f.write(text + "\n")

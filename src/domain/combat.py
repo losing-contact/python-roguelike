@@ -8,7 +8,6 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-
 from domain.balance import (
     HIT_BASE,
     HIT_MAX,
@@ -16,11 +15,10 @@ from domain.balance import (
     HIT_PER_AGILITY,
     MIN_MAX_HEALTH,
     SCALE,
-    VAMPIRE_DRAIN,
     SLEEP_CHANCE,
+    VAMPIRE_DRAIN,
 )
-from domain.enemies.types import Trait
-from domain.models.entities import Entity
+from domain.entities import EnemyKind, Entity
 
 
 @dataclass(frozen=True)
@@ -36,16 +34,21 @@ def hit_chance(attacker: Entity, target: Entity) -> float:
 
 
 def resolve_attack(attacker: Entity, target: Entity, rng: random.Random) -> AttackResult:
+    # Попытка атаки начинает бой, даже если удар окажется промахом.
+    for entity in (attacker, target):
+        if entity.kind is EnemyKind.GHOST:
+            entity.combat_started = True
+            entity.invisible = False
 
     # особенность огра: после удара отдыхает, а следующий удар гарантированно попадает
-    ogre = Trait.REST_AFTER_ATTACK in attacker.traits
+    ogre = attacker.kind is EnemyKind.OGRE
     guaranteed = ogre and attacker.counter_ready
     if ogre:
         attacker.counter_ready = False
         attacker.resting = True
 
     # особенность вампира: первый удар по нему всегда мимо
-    if Trait.FIRST_HIT_MISS in target.traits and not target.first_hit_spent:
+    if target.kind is EnemyKind.VAMPIRE and not target.first_hit_spent:
         target.first_hit_spent = True
         return AttackResult(hit=False)
 
@@ -60,12 +63,12 @@ def resolve_attack(attacker: Entity, target: Entity, rng: random.Random) -> Atta
     target.health = max(0, target.health - damage)
 
     drained = 0
-    if Trait.DRAIN_MAX_HEALTH in attacker.traits and target.alive:
+    if attacker.kind is EnemyKind.VAMPIRE and target.alive:
         drained = min(VAMPIRE_DRAIN, max(0, target.max_health - MIN_MAX_HEALTH))
         target.max_health -= drained
         target.health = min(target.health, target.max_health)
     slept = False
-    if Trait.SLEEP_ON_HIT in attacker.traits and target.alive and rng.random() < SLEEP_CHANCE:
+    if attacker.kind is EnemyKind.WIZZARD and target.alive and rng.random() < SLEEP_CHANCE:
         target.asleep = 1                      # игрок пропустит следующий ход
         slept = True
     return AttackResult(hit=True, damage=damage, drained_max_health=drained, slept=slept)

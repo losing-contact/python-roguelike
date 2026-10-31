@@ -5,7 +5,7 @@ import curses
 from dataclasses import dataclass
 
 from domain.commands import Move
-from domain.models.items import ItemType
+from domain.items import ItemType
 
 # То же, что w/a/s/d/h/j/k/e/q, но на русской раскладке.
 RU_LAYOUT = {"ц": "w", "ф": "a", "ы": "s", "в": "d", "р": "h", "о": "j", "л": "k", "у": "e",

@@ -4,16 +4,11 @@
 """
 from dataclasses import asdict
 
-from domain.enemies.types import SPECS, EnemyKind
-from domain.models.entities import ActiveEffect, Character, Enemy
-from domain.models.exploration import Exploration
-from domain.models.items import Backpack, Item, ItemType, Stat
-from domain.models.keys import KeyColor
-from domain.models.level import Corridor, Level, Room
-from domain.models.position import Pos
-from domain.models.stats import RunStats
-from domain.models.tile import Tile
+from domain.entities import SPECS, ActiveEffect, Character, Enemy, EnemyKind
+from domain.items import Backpack, Item, ItemType, Stat
+from domain.level import Corridor, Exploration, KeyColor, Level, Pos, Room, Tile
 from domain.session import GameSession
+from domain.stats import RunStats
 
 # Каждый тип клетки записываем одним символом, чтобы карту в файле можно было прочитать глазами
 TILE_CHARS = {
@@ -67,6 +62,7 @@ def player_to_dict(player):
     return {
         "pos": pos_to_list(player.pos),
         "health": player.health,
+        "asleep": player.asleep,
         "max_health": player.max_health,
         "agility": player.agility,
         "strength": player.strength,
@@ -84,6 +80,7 @@ def player_from_dict(data):
     player = Character(pos_from_list(data["pos"]))
     player.keys = {KeyColor(value) for value in data.get("keys", [])}
     player.health = data["health"]
+    player.asleep = data.get("asleep", 0)
     player.max_health = data["max_health"]
     player.agility = data["agility"]
     player.strength = data["strength"]
@@ -106,6 +103,13 @@ def enemy_to_dict(enemy):
         "strength": enemy.strength,
         "timer": enemy.timer,
         "first_hit_spent": enemy.first_hit_spent,
+        "invisible": enemy.invisible,
+        "phase_turns": enemy.phase_turns,
+        "combat_started": enemy.combat_started,
+        "resting": enemy.resting,
+        "counter_ready": enemy.counter_ready,
+        "disguised": enemy.disguised,
+        "last_diagonal": list(enemy.last_diagonal) if enemy.last_diagonal else None,
     }
 
 
@@ -119,6 +123,13 @@ def enemy_from_dict(data):
         strength=data["strength"],
         timer=data["timer"],
         first_hit_spent=data["first_hit_spent"],
+        invisible=data.get("invisible", False),
+        phase_turns=data.get("phase_turns", 3),
+        combat_started=data.get("combat_started", False),
+        resting=data.get("resting", False),
+        counter_ready=data.get("counter_ready", False),
+        disguised=data.get("disguised", False),
+        last_diagonal=tuple(data["last_diagonal"]) if data.get("last_diagonal") else None,
     )
 
 

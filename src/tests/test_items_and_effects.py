@@ -1,6 +1,6 @@
 from domain.balance import BACKPACK_SLOT_LIMIT, MIN_HEALTH_AFTER_EFFECT
-from domain.models.entities import Character
-from domain.models.items import Backpack, Item, ItemType, Stat
+from domain.entities import Character
+from domain.items import Backpack, Item, ItemType, Stat
 
 
 def apple():

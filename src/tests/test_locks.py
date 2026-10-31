@@ -3,19 +3,18 @@ import random
 import pytest
 from level_builder import level_from_ascii
 
-from domain.generation.level_factory import generate_level
-from domain.generation.locks import (
+from domain.generation import generate_level
+from domain.geometry import bfs_distances
+from domain.level import KeyColor, Pos
+from domain.validation import (
     can_pass,
     collect_keys,
+    find_problems,
     lock_count,
     lock_problems,
     place_keys,
     rooms_connected,
 )
-from domain.generation.validate import find_problems
-from domain.geometry import bfs_distances
-from domain.models.keys import KeyColor
-from domain.models.position import Pos
 
 # В картах: 0 - стартовая комната, r/y/b - запертые двери, R/Y/B - ключи, > - выход
 
@@ -61,7 +60,8 @@ def test_two_doors_that_need_each_others_keys_are_a_softlock():
 def test_one_key_can_be_unreachable_while_the_exit_is_fine():
     # синяя дверь в тупике, ключ от неё лежит за ней самой, но выход и без неё доступен
     problems = lock_problems(level("0:>:b:B"))
-    assert problems == ["до ключа blue не дойти"]
+    assert "до ключа blue не дойти" in problems
+    assert any("ключ недостижим" in problem for problem in problems)
 
 
 def test_door_must_stand_in_a_doorway():
@@ -216,3 +216,13 @@ def test_doors_stand_only_on_corridors_that_cannot_be_bypassed():
             assert not rooms_connected(lv, corridor, corridor.room_a, corridor.room_b)
             checked += 1
     assert checked > 40
+
+
+def test_every_key_must_be_reachable_even_if_its_color_is_already_available():
+    lv = level('0R:>#R')
+    assert any('ключ недостижим' in problem for problem in lock_problems(lv))
+
+
+def test_unreachable_key_is_reported_even_without_a_door_of_its_color():
+    lv = level('0:>#B')
+    assert any('ключ недостижим' in problem for problem in lock_problems(lv))

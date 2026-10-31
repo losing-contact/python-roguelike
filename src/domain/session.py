@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# тут мы импортируем все что только надо 
 import random
 from collections.abc import Callable
 from enum import Enum
@@ -11,18 +10,13 @@ from domain import combat
 from domain import events as ev
 from domain.balance import LEVELS
 from domain.commands import Command, Move, UseItem
-from domain.enemies import invisibility
-from domain.enemies.behaviors import PATTERNS, diagonal_step_toward
-from domain.enemies.types import Trait
-from domain.generation.level_factory import generate_level
+from domain.enemies import PATTERNS, update_ghost_visibility
+from domain.entities import Character, Enemy, EnemyKind
+from domain.generation import generate_level
 from domain.geometry import bfs_path
-from domain.models.entities import Character, Enemy
-from domain.models.exploration import Exploration
-from domain.models.items import Item, ItemType
-from domain.models.level import Level
-from domain.models.position import Pos
-from domain.models.stats import RunStats
-from domain.models.tile import Tile
+from domain.items import ItemType
+from domain.level import Exploration, Level, Pos, Tile
+from domain.stats import RunStats
 from domain.visibility import compute_visible
 
 LevelGenerator = Callable[[int, random.Random, int], Level]
@@ -62,7 +56,7 @@ class GameSession:
 
     # ------------------------------------------------------------------
     # Публичный интерфейс
-  
+
     def handle(self, command: Command) -> list[ev.Event]:
         """Выполняет команду игрока и ход мира. Возвращает произошедшие события."""
         if self.state is not GameState.PLAYING:
@@ -189,25 +183,27 @@ class GameSession:
             events.append(ev.WeaponUnequipped(player.weapon))
             player.weapon = None
             return True
+        # Сначала проверяем место: при неудаче рюкзак и оружие остаются как были.
+        drop_pos = None
+        if player.weapon is not None:
+            for cell in player.pos.neighbors():
+                if (self.level.is_walkable(cell) and self.level.tile_at(cell) is not Tile.EXIT
+                        and cell not in self.level.items and cell not in self.level.keys
+                        and self.level.enemy_at(cell) is None):
+                    drop_pos = cell
+                    break
+            if drop_pos is None:
+                return False
+
         new_weapon = player.backpack.take(ItemType.WEAPON, slot)
         if new_weapon is None:
             return False
         old_weapon, player.weapon = player.weapon, new_weapon
         events.append(ev.WeaponEquipped(new_weapon))
         if old_weapon is not None:
-            self._drop_near_player(old_weapon)
+            self.level.items[drop_pos] = old_weapon
             events.append(ev.WeaponDropped(old_weapon))
         return True
-
-    def _drop_near_player(self, item: Item) -> None:
-        """Оружие при смене падает на соседнюю свободную клетку (иначе - под ноги)."""
-        for cell in self.player.pos.neighbors():
-            if (self.level.is_walkable(cell) and cell not in self.level.items
-                    and self.level.enemy_at(cell) is None
-                    and self.level.tile_at(cell) is not Tile.EXIT):
-                self.level.items[cell] = item
-                return
-        self.level.items.setdefault(self.player.pos, item)
 
     # ------------------------------------------------------------------
     # Ход мира
@@ -216,7 +212,7 @@ class GameSession:
         for _ in self.player.tick_effects():
             events.append(ev.EffectExpired())
         for enemy in list(self.level.enemies):
-            invisibility.tick(enemy, self.player.pos, self.rng)
+            update_ghost_visibility(enemy, self.rng)
             if enemy.alive:
                 self._enemy_turn(enemy, events)
             if not self.player.alive:
@@ -238,18 +234,16 @@ class GameSession:
             enemy.counter_ready = True
             return
 
-        enemy.timer += 1
-        if enemy.timer < enemy.spec.move_every:
-            return
+        # Контратака огра готова сразу после одного хода отдыха.
+        if not enemy.counter_ready:
+            enemy.timer += 1
+            if enemy.timer < enemy.spec.move_every:
+                return
         enemy.timer = 0
 
         player_pos = self.player.pos
 
-        room = self.level.room_at(enemy.pos)   
-        diagonal = (Trait.DIAGONAL_MOVE in enemy.traits 
-                    and room is not None and room == self.level.room_at(player_pos))
-        gap = max(abs(enemy.pos.x - player_pos.x), abs(enemy.pos.y - player_pos.y))
-        if enemy.pos.manhattan(player_pos) == 1 or (diagonal and gap == 1):
+        if enemy.pos.manhattan(player_pos) == 1:
             self._enemy_attack(enemy, events)
             return
 
@@ -263,27 +257,21 @@ class GameSession:
                     and p not in occupied
                 )
 
-            if diagonal: 
-                dstep = diagonal_step_toward(enemy.pos, player_pos, passable, self.rng)
-                if dstep is not None:
-                    enemy.pos = dstep
-                    return
-
             path = bfs_path(enemy.pos, player_pos, passable, max_dist=enemy.hostility)
             if path:
-                steps = max(1, min(enemy.spec.step_size, len(path) - 1))
-                enemy.pos = path[steps - 1]
+                enemy.pos = path[0]
                 return
 
         step = PATTERNS[enemy.kind](enemy, self.level, self.rng)
         if step is not None and step != player_pos:
+            if enemy.kind is EnemyKind.WIZZARD:
+                dx, dy = step.x - enemy.pos.x, step.y - enemy.pos.y
+                if abs(dx) == abs(dy) == 1:
+                    enemy.last_diagonal = (dx, dy)
             enemy.pos = step
-
 
 
     def _enemy_attack(self, enemy: Enemy, events: list[ev.Event]) -> None:
         result = combat.resolve_attack(enemy, self.player, self.rng)
-        events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
-                                       result.drained_max_health))
         events.append(ev.EnemyAttacked(enemy.kind, result.hit, result.damage,
                                        result.drained_max_health, result.slept))

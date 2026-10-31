@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from domain.models.items import ItemType
+from domain.items import ItemType
 
 
 @dataclass(frozen=True)

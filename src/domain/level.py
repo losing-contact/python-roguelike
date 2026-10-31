@@ -1,12 +1,51 @@
+"""Карта: координаты, типы клеток, комнаты, коридоры, ключи и память исследования."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import TYPE_CHECKING
 
-from domain.models.entities import Enemy
-from domain.models.items import Item
-from domain.models.keys import KeyColor
-from domain.models.position import Pos
-from domain.models.tile import WALKABLE, Tile
+from domain.items import Item
+
+if TYPE_CHECKING:
+    from domain.entities import Enemy
+
+CARDINALS = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+
+@dataclass(frozen=True)
+class Pos:
+    """Клетка карты: x - столбец, y - строка."""
+
+    x: int
+    y: int
+
+    def shifted(self, dx: int, dy: int) -> Pos:
+        return Pos(self.x + dx, self.y + dy)
+
+    def manhattan(self, other: Pos) -> int:
+        return abs(self.x - other.x) + abs(self.y - other.y)
+
+    def neighbors(self) -> list[Pos]:
+        return [self.shifted(dx, dy) for dx, dy in CARDINALS]
+
+
+class Tile(Enum):
+    VOID = "void"          # сплошная порода, не рисуется
+    WALL = "wall"          # стена комнаты
+    FLOOR = "floor"        # пол комнаты
+    DOORWAY = "doorway"    # проём в стене
+    CORRIDOR = "corridor"  # коридор между комнатами
+    EXIT = "exit"          # блок перехода на следующий уровень
+
+
+WALKABLE = frozenset({Tile.FLOOR, Tile.DOORWAY, Tile.CORRIDOR, Tile.EXIT})
+
+
+class KeyColor(Enum):
+    RED = "red"
+    YELLOW = "yellow"
+    BLUE = "blue"
 
 
 @dataclass
@@ -99,3 +138,14 @@ class Level:
             and self.tile_at(pos) is not Tile.EXIT
             and self.enemy_at(pos) is None
         )
+
+
+@dataclass
+class Exploration:
+    """Что игрок уже видел на текущем уровне. Это состояние нужно сохранять.
+
+    Хранятся только клетки (позиции). Что именно показывать на месте увиденной клетки,
+    решает слой отображения: см. presentation/theme.py::REMEMBERED_TILES.
+    """
+
+    seen: set[Pos] = field(default_factory=set)

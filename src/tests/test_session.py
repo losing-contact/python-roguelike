@@ -2,10 +2,9 @@ from dataclasses import replace
 
 from domain import events as ev
 from domain.commands import Move, UseItem
-from domain.enemies.factory import create_enemy
-from domain.enemies.types import EnemyKind
-from domain.models.items import Item, ItemType
-from domain.models.position import Pos
+from domain.entities import EnemyKind, create_enemy
+from domain.items import Item, ItemType
+from domain.level import Pos
 from domain.session import GameState
 
 ROOM = [
@@ -324,3 +323,54 @@ def test_character_state_survives_level_change(make_session):
         s.handle(RIGHT)
     assert s.player.backpack.treasure == 42
     assert s.player.strength == 25
+
+
+def test_one_enemy_attack_produces_one_event(make_session, hit_rng):
+    session = make_session([ROOM], hit_rng)
+    enemy = put_enemy(session, EnemyKind.ZOMBIE, 3, 2)
+    enemy.timer = enemy.spec.move_every - 1
+    events = []
+    before = session.player.health
+    session._enemy_turn(enemy, events)
+    attacks = [event for event in events if isinstance(event, ev.EnemyAttacked)]
+    assert len(attacks) == 1
+    assert before - session.player.health == attacks[0].damage
+
+
+def test_weapon_change_without_neighbor_space_keeps_both_weapons(make_session):
+    session = make_session([['###', '#@#', '###']])
+    old = Item(ItemType.WEAPON, 'Меч', strength=10)
+    new = Item(ItemType.WEAPON, 'Топор', strength=20)
+    session.player.weapon = old
+    session.player.backpack.add(new)
+    assert session.handle(UseItem(ItemType.WEAPON, 0)) == []
+    assert session.player.weapon is old
+    assert session.player.backpack.items_of(ItemType.WEAPON) == [new]
+    assert session.level.items == {}
+
+
+def test_weapon_drop_does_not_cover_a_key_or_replace_an_item(make_session):
+    from domain.level import KeyColor
+
+    session = make_session([['#####', '#.@.#', '##.##', '#####']])
+    old = Item(ItemType.WEAPON, 'Меч', strength=10)
+    new = Item(ItemType.WEAPON, 'Топор', strength=20)
+    food = Item(ItemType.FOOD, 'Яблоко', health=10)
+    session.player.weapon = old
+    session.player.backpack.add(new)
+    session.level.keys[Pos(1, 1)] = KeyColor.RED
+    session.level.items[Pos(3, 1)] = food
+    session.handle(UseItem(ItemType.WEAPON, 0))
+    assert session.player.weapon is new
+    assert session.level.items == {Pos(3, 1): food, Pos(2, 2): old}
+    assert session.level.keys == {Pos(1, 1): KeyColor.RED}
+
+
+def test_enemy_hit_updates_received_hit_statistics(make_session, hit_rng):
+    session = make_session([ROOM], hit_rng)
+    enemy = put_enemy(session, EnemyKind.ZOMBIE, 3, 2)
+    enemy.timer = enemy.spec.move_every - 1
+    # Атака игрока не убивает зомби; в конце хода тот отвечает.
+    session.handle(RIGHT)
+    assert session.stats.hits_dealt == 1
+    assert session.stats.hits_received == 1

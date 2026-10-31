@@ -3,7 +3,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from datalayer.serializers import session_from_dict, session_to_dict
-from domain.models.stats import RunStats
+from domain.stats import RunStats
 
 
 class JsonRepository:

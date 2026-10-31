@@ -7,8 +7,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from domain.models.stats import RunStats
     from domain.session import GameSession
+    from domain.stats import RunStats
 
 
 class SaveRepository(Protocol):
@@ -20,4 +20,6 @@ class SaveRepository(Protocol):
 
     def add_record(self, stats: RunStats) -> None: ...
 
-    def top_records(self, limit: int) -> list[RunStats]: ...
+    def delete_session(self) -> None: ...
+
+    def top_records(self, limit: int = 10) -> list[RunStats]: ...

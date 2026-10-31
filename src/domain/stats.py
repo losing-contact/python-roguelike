@@ -1,9 +1,10 @@
+"""Статистика прохождения, которая заполняется из игровых событий."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from domain import events as ev
-from domain.models.items import ItemType
+from domain.items import ItemType
 
 
 @dataclass
@@ -17,8 +18,9 @@ class RunStats:
     elixirs_drunk: int = 0
     scrolls_read: int = 0
     hits_dealt: int = 0
-    hits_missed: int = 0
+    hits_missed: int = 0  # промахи игрока, сохраняем для совместимости
     steps: int = 0
+    hits_received: int = 0
 
     def record(self, event: ev.Event) -> None:
         match event:
@@ -29,6 +31,8 @@ class RunStats:
                     self.hits_dealt += 1
                 else:
                     self.hits_missed += 1
+            case ev.EnemyAttacked(hit=True):
+                self.hits_received += 1
             case ev.EnemyKilled(treasure=treasure):
                 self.enemies_killed += 1
                 self.treasure += treasure

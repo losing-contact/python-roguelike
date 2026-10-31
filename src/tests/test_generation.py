@@ -3,10 +3,9 @@ import random
 import pytest
 
 from domain.balance import GRID_COLS, GRID_ROWS, LEVEL_H, LEVEL_W
-from domain.generation.level_factory import generate_level
-from domain.generation.populate import enemy_count, useful_count
-from domain.generation.validate import find_problems
-from domain.models.items import ItemType
+from domain.generation import enemy_count, generate_level, useful_count
+from domain.items import ItemType
+from domain.validation import find_problems
 
 SEEDS = range(25)
 NUMBERS = (1, 8, 15, 21)
@@ -77,3 +76,23 @@ def test_corridors_store_their_geometry():
     for corridor in level.corridors:
         assert corridor.cells
         assert corridor.door_a != corridor.door_b
+
+
+@pytest.mark.parametrize('seed', range(20))
+def test_connection_tree_reaches_all_rooms_without_cycles(seed):
+    from unittest.mock import patch
+
+    from domain.generation import choose_connections, grid_edges
+
+    with patch('domain.generation.EXTRA_CORRIDORS', (0, 0)):
+        edges = choose_connections(random.Random(seed))
+    assert len(edges) == GRID_ROWS * GRID_COLS - 1
+    assert len(set(edges)) == len(edges)
+    assert set(edges) <= set(grid_edges())
+    seen = {0}
+    while True:
+        expanded = seen | {b for a, b in edges if a in seen} | {a for a, b in edges if b in seen}
+        if expanded == seen:
+            break
+        seen = expanded
+    assert seen == set(range(GRID_ROWS * GRID_COLS))

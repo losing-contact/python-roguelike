@@ -1,20 +1,12 @@
-"""Паттерны передвижения врагов, когда игрока рядом нет.
-
-Каждый тип врага может иметь свой паттерн. Новый тип добавляется функцией
-и записью в PATTERNS; остальной код не меняется (стратегия).
-"""
+"""Поведение врагов вне погони, невидимость привидения и маскировка мимика."""
 from __future__ import annotations
 
 import random
-from collections.abc import Callable
 
-from domain.enemies.types import EnemyKind
-from domain.models.entities import Enemy
-from domain.models.level import Level
-from domain.models.position import Pos
-from domain.models.tile import Tile
-
-Pattern = Callable[[Enemy, Level, random.Random], Pos | None]
+from domain.balance import GHOST_INVISIBLE_TURNS, GHOST_VISIBLE_TURNS
+from domain.entities import Enemy, EnemyKind
+from domain.items import ItemType
+from domain.level import Level, Pos, Tile
 
 
 def random_walk(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
@@ -69,29 +61,21 @@ DIAGONALS = ((1, 1), (1, -1), (-1, 1), (-1, -1))
 
 
 def diagonal_walk(enemy: Enemy, level: Level, rng: random.Random) -> Pos | None:
-    """Шаг по диагонали; сторону выбираем заново каждый ход (змей-маг)."""
+    """Выбирает другую диагональ, если она доступна (змей-маг)."""
     in_room = level.tile_at(enemy.pos) is Tile.FLOOR
     options = [
         p for p in (enemy.pos.shifted(dx, dy) for dx, dy in DIAGONALS)
         if level.can_enemy_enter(p) and (not in_room or level.tile_at(p) is Tile.FLOOR)
     ]
-    return rng.choice(options) if options else random_walk(enemy, level, rng)
-
-def diagonal_step_toward(
-    pos: Pos, target: Pos, passable: Callable[[Pos], bool], rng: random.Random
-) -> Pos | None:
-    """Диагональный шаг, после которого до цели ближе всего (при равенстве случайный)."""
-    options = [
-        p for p in (pos.shifted(dx, dy) for dx, dy in DIAGONALS)
-        if p != target and passable(p)
-    ]
     if not options:
-        return None
-    best = min(p.manhattan(target) for p in options)
-    return rng.choice([p for p in options if p.manhattan(target) == best])
+        return random_walk(enemy, level, rng)
+    other_directions = [
+        p for p in options
+        if (p.x - enemy.pos.x, p.y - enemy.pos.y) != enemy.last_diagonal
+    ]
+    return rng.choice(other_directions or options)
 
-
-PATTERNS: dict[EnemyKind, Pattern] = {
+PATTERNS = {
     EnemyKind.ZOMBIE: random_walk,
     EnemyKind.VAMPIRE: random_walk,
     EnemyKind.GHOST: teleport,
@@ -99,3 +83,26 @@ PATTERNS: dict[EnemyKind, Pattern] = {
     EnemyKind.WIZZARD: diagonal_walk,
     EnemyKind.MIMIC: random_walk,
 }
+
+
+def update_ghost_visibility(enemy: Enemy, rng: random.Random) -> None:
+    """До первой атаки чередует фазы, после начала боя привидение всегда видно."""
+    if enemy.kind is not EnemyKind.GHOST:
+        return
+    if enemy.combat_started:
+        enemy.invisible = False
+        return
+    enemy.phase_turns -= 1
+    if enemy.phase_turns <= 0:
+        enemy.invisible = not enemy.invisible
+        low, high = GHOST_INVISIBLE_TURNS if enemy.invisible else GHOST_VISIBLE_TURNS
+        enemy.phase_turns = rng.randint(low, high)
+
+
+# какие предметы бывают на карте (сокровища на полу не лежат, их не имитируем)
+DISGUISES = (ItemType.FOOD, ItemType.ELIXIR, ItemType.SCROLL, ItemType.WEAPON)
+
+
+def disguise_of(enemy: Enemy) -> ItemType:
+    """Под какой предмет маскируется мимик (зависит от клетки, где он лежит)."""
+    return DISGUISES[(enemy.pos.x * 3 + enemy.pos.y * 5) % len(DISGUISES)]

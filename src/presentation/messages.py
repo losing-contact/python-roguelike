@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from domain import events as ev
-from domain.enemies.types import SPECS
-from domain.models.items import Item, ItemType, Stat
-from domain.models.keys import KeyColor
+from domain.entities import SPECS
+from domain.items import Item, ItemType, Stat
+from domain.level import KeyColor
 
 KEY_NAMES = {KeyColor.RED: "красный", KeyColor.YELLOW: "жёлтый", KeyColor.BLUE: "синий"}
 
@@ -50,7 +50,9 @@ def format_event(event: ev.Event) -> str | None:
             return f"Вы ударили: {SPECS[kind].name} (-{damage})"
         case ev.PlayerAttacked(target=kind):
             return f"Вы промахнулись по: {SPECS[kind].name}"
-        case ev.EnemyAttacked(attacker=kind, hit=True, damage=damage, drained_max_health=drained, slept=slept):
+        case ev.EnemyAttacked(
+            attacker=kind, hit=True, damage=damage, drained_max_health=drained, slept=slept
+        ):
             drain = f", макс. здоровье -{drained}" if drained else ""
             sleep = ", вы уснули" if slept else ""
             return f"{SPECS[kind].name} бьёт вас (-{damage}{drain}{sleep})"

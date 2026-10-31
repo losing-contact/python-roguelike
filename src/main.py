@@ -1,9 +1,7 @@
-#точка входа 
+"""Точка входа: аргументы запуска, хранилище и curses."""
+from __future__ import annotations
 
-
-from __future__ import annotations 
-
-import argparse 
+import argparse
 import random
 import sys
 from pathlib import Path

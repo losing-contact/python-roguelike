@@ -1,14 +1,14 @@
 """Чистая геометрия сетки: поиск пути и линия Брезенхэма.
 
 Здесь нет ни curses, ни знания об игре - только клетки и функция «проходима ли клетка».
-Для тумана войны (Задание 4) сюда же добавится ray casting.
+Ray Casting для тумана войны находится в domain/visibility.py.
 """
 from __future__ import annotations
 
 from collections import deque
 from collections.abc import Callable, Iterator
 
-from domain.models.position import Pos
+from domain.level import Pos
 
 Passable = Callable[[Pos], bool]
 
@@ -37,23 +37,25 @@ def bfs_path(
     """
     if start == goal:
         return []
-    prev: dict[Pos, Pos] = {}
-    seen = {start}
+    # Наличие клетки в prev означает, что она уже посещена.
+    prev: dict[Pos, Pos] = {start: start}
     queue = deque([(start, 0)])
     while queue:
         cur, d = queue.popleft()
         if max_dist is not None and d >= max_dist:
             continue
         for nxt in cur.neighbors():
-            if nxt in seen or not passable(nxt):
+            if nxt in prev or not passable(nxt):
                 continue
-            seen.add(nxt)
             prev[nxt] = cur
             if nxt == goal:
-                path = [nxt]
-                while path[-1] in prev and prev[path[-1]] != start:
-                    path.append(prev[path[-1]])
-                return path[::-1]
+                path = []
+                cell = goal
+                while cell != start:
+                    path.append(cell)
+                    cell = prev[cell]
+                path.reverse()
+                return path
             queue.append((nxt, d + 1))
     return None
 

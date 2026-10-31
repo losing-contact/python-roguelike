@@ -6,10 +6,7 @@
 """
 from __future__ import annotations
 
-from domain.models.keys import KeyColor
-from domain.models.level import Level, Room
-from domain.models.position import Pos
-from domain.models.tile import Tile
+from domain.level import KeyColor, Level, Pos, Room, Tile
 
 CHARS = {
     "#": Tile.WALL, ".": Tile.FLOOR, ":": Tile.CORRIDOR, "+": Tile.DOORWAY,

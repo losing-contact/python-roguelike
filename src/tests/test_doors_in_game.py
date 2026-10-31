@@ -5,12 +5,9 @@ from test_playthrough import bot_step
 
 from domain import events as ev
 from domain.commands import Move
-from domain.enemies.factory import create_enemy
-from domain.enemies.types import EnemyKind
-from domain.generation.level_factory import generate_level
-from domain.models.entities import Character
-from domain.models.keys import KeyColor
-from domain.models.position import Pos
+from domain.entities import Character, EnemyKind, create_enemy
+from domain.generation import generate_level
+from domain.level import KeyColor, Pos
 from domain.session import GameSession, GameState
 from domain.visibility import compute_visible
 from presentation.messages import format_event
